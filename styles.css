@@ -9,7 +9,7 @@ body {
     background: linear-gradient(180deg, #dfdfdf, #1e3a5f);
 }
     .cool-button {
-      background-color: #aaa; /* Warna latar hijau */
+      background-color: #45a060; /* Warna latar hijau */
       border: none;              /* Hilangkan border */
       color: white;              /* Warna teks putih */
       padding: 15px 30px;        /* Ruang dalam button */
