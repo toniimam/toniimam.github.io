@@ -1,0 +1,89 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    text-align: center;
+    padding: 20px;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    background-color: #f4f4f4;
+    color: #333;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.tab-button:hover, .tab-button.active {
+    background-color: #ff6600;
+    color: white;
+    border: 1px solid #ff6600;
+}
+
+.tab-content {
+    background-color: none;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 9px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+input[type="number"], select {
+    width: 50%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#result, #result1 {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #888;
+    color: #fff;
+    border-radius: 5px;
+    font-weight: bold;
+    text-shadow: 0px 0px 4px rgba(0,0,0,0.9);
+    
+}
+
+.hidden {
+    display: none;
+}
+input:focus {
+    box-shadow: 0 0 10px rgba(225, 102, 1, 1);
+    outline: none;
+    transition: box-shadow 0.3s ease;
+}
+.styled-select {
+    text-align: center;
+    width: 25%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #333;
+    bold
+    transition: border-color 0.3s;
+}
+
+.styled-select:hover {
+    border-color: #ff6600;
+}
+
+.styled-select:focus {
+    border-color: #ff6600;
+    outline: none;
+    box-shadow: 0 0 5px rgba(#ff6600), 0.5);
+}
