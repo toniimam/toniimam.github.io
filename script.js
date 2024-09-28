@@ -7,12 +7,14 @@ const keramikContent = document.getElementById('keramikContent');
 // Elemen input Wallpanel
 const widthInput1 = document.getElementById('widthInput1');
 const heightInput1 = document.getElementById('heightInput1');
+const wallpanelPriceInput = document.getElementById('wallpanelPriceInput'); // Input harga Wallpanel
 const result1 = document.getElementById('result1');
 
 // Elemen input Keramik
 const roomWidth = document.getElementById('roomWidth');
 const roomHeight = document.getElementById('roomHeight');
 const tileAreaPerBox = document.getElementById('tileAreaPerBox');
+const tilePriceInput = document.getElementById('tilePriceInput'); // Input harga Keramik
 const result = document.getElementById('result');
 
 // Variabel tambahan untuk Wallpanel
@@ -35,10 +37,22 @@ function showTab(tab) {
     }
 }
 
-// Fungsi menghitung kebutuhan Wallpanel
+// Fungsi untuk menambahkan titik ribuan pada input harga
+function formatRupiah(value) {
+    return value.replace(/\D/g, '') // Hanya mengizinkan angka
+                .replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // Menambah titik ribuan
+}
+
+// Fungsi untuk mendapatkan nilai asli dari input (tanpa titik ribuan)
+function getNumericValue(input) {
+    return input.value.replace(/\./g, ''); // Menghapus titik untuk perhitungan
+}
+
+// Fungsi menghitung kebutuhan Wallpanel dengan harga custom
 function calculateWallpanel() {
     const width = parseFloat(widthInput1.value);
     const height = parseFloat(heightInput1.value);
+    const customWallpanelPrice = parseFloat(getNumericValue(wallpanelPriceInput)) || wallpanelPrice; // Gunakan harga custom jika ada, jika tidak, gunakan default
 
     if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
         result1.textContent = "Silakan masukkan dimensi yang valid.";
@@ -48,16 +62,18 @@ function calculateWallpanel() {
     const wallArea = width * height;
     const panelArea = wallpanelWidth * wallpanelHeight;
     const panelCount = Math.ceil(wallArea / panelArea);
-    const totalPrice = panelCount * wallpanelPrice;
+    const totalPrice = panelCount * customWallpanelPrice;
 
+    // Format totalPrice dengan titik ribuan menggunakan toLocaleString
     result1.innerHTML = `Luas dinding: ${wallArea.toFixed(1)} m² <br> Kebutuhan: ${panelCount} lonjor <br> Total Harga: Rp ${totalPrice.toLocaleString('id-ID')}`;
 }
 
-// Fungsi menghitung kebutuhan Keramik
+// Fungsi menghitung kebutuhan Keramik dengan harga custom
 function calculateTiles() {
     const width = parseFloat(roomWidth.value);
     const height = parseFloat(roomHeight.value);
     const areaPerBox = parseFloat(tileAreaPerBox.value);
+    const customTilePrice = parseFloat(getNumericValue(tilePriceInput)); // Harga custom dari input
 
     if (isNaN(width) || isNaN(height) || isNaN(areaPerBox) || width <= 0 || height <= 0 || areaPerBox <= 0) {
         result.textContent = "Masukkan nilai yang valid.";
@@ -66,9 +82,20 @@ function calculateTiles() {
 
     const roomArea = width * height;
     const totalBoxes = Math.ceil(roomArea / areaPerBox);
+    const totalPrice = totalBoxes * customTilePrice;
 
-    result.innerHTML = `Luas ruangan: ${roomArea.toFixed(1)} m² <br> Total yang dibutuhkan: ${totalBoxes} dus`;
+    // Format totalPrice dengan titik ribuan menggunakan toLocaleString
+    result.innerHTML = `Luas ruangan: ${roomArea.toFixed(1)} m² <br> Total yang dibutuhkan: ${totalBoxes} dus <br> Total Harga: Rp ${totalPrice ? totalPrice.toLocaleString('id-ID') : '-'}`;
 }
+
+// Fungsi untuk memformat input harga saat pengguna mengetik
+wallpanelPriceInput.addEventListener('input', function () {
+    this.value = formatRupiah(this.value);
+});
+
+tilePriceInput.addEventListener('input', function () {
+    this.value = formatRupiah(this.value);
+});
 
 // Event listener untuk tab
 wallpanelTab.addEventListener('click', () => showTab('wallpanel'));
@@ -77,13 +104,16 @@ keramikTab.addEventListener('click', () => showTab('keramik'));
 // Event listener untuk input
 widthInput1.addEventListener('input', calculateWallpanel);
 heightInput1.addEventListener('input', calculateWallpanel);
+wallpanelPriceInput.addEventListener('input', calculateWallpanel);
 
 roomWidth.addEventListener('input', calculateTiles);
 roomHeight.addEventListener('input', calculateTiles);
+tilePriceInput.addEventListener('input', calculateTiles);
 tileAreaPerBox.addEventListener('input', calculateTiles);
 
 // Set tab default
 showTab('wallpanel');
+
 // Fungsi untuk menampilkan waktu secara real-time
 function updateTime() {
     const options = {
