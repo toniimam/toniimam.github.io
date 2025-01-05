@@ -165,35 +165,79 @@
       text-align: center;
       color: #333;
     }
+    .clear-btn {
+  background: #dc3545; /* Warna merah */
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 10px;
+  transition: background-color 0.3s;
+}
+
+.clear-btn:hover {
+  background: #b02a37; /* Warna merah lebih gelap */
+}
+
   </style>
 </head>
 <body>
-   <div class="calculator">
+  <div class="calculator">
     <div class="display">
       <input type="text" id="result" value="0" readonly>
     </div>
     <div class="buttons">
-      <button class="number-btn" onclick="appendValue('1')">1</button>
-      <button class="number-btn" onclick="appendValue('2')">2</button>
-      <button class="number-btn" onclick="appendValue('3')">3</button>
-      <button class="delete-btn" onclick="clearLast()">←</button>
-      <button class="number-btn" onclick="appendValue('4')">4</button>
-      <button class="number-btn" onclick="appendValue('5')">5</button>
-      <button class="number-btn" onclick="appendValue('6')">6</button>
-      <button class="function-btn" onclick="appendValue('*')">×</button>
-      <button class="number-btn" onclick="appendValue('7')">7</button>
-      <button class="number-btn" onclick="appendValue('8')">8</button>
-      <button class="number-btn" onclick="appendValue('9')">9</button>
-      <button class="function-btn equal-btn" onclick="calculate()">=</button>
-      <button class="number-btn" onclick="appendValue('0')">0</button>
-      <button class="number-btn" onclick="appendValue('00')">00</button>
-      <button class="number-btn" onclick="appendValue('000')">000</button>
-    </div>
+  <button class="number-btn" onclick="appendValue('1')">1</button>
+  <button class="number-btn" onclick="appendValue('2')">2</button>
+  <button class="number-btn" onclick="appendValue('3')">3</button>
+  <button class="delete-btn" onclick="clearLast()">←</button>
+  <button class="number-btn" onclick="appendValue('4')">4</button>
+  <button class="number-btn" onclick="appendValue('5')">5</button>
+  <button class="number-btn" onclick="appendValue('6')">6</button>
+  <button class="function-btn" onclick="appendValue('*')">×</button>
+  <button class="number-btn" onclick="appendValue('7')">7</button>
+  <button class="number-btn" onclick="appendValue('8')">8</button>
+  <button class="number-btn" onclick="appendValue('9')">9</button>
+  <button class="function-btn" onclick="appendValue('+')">+</button>
+  <button class="number-btn" onclick="appendValue('0')">0</button>
+  <button class="number-btn" onclick="appendValue('00')">00</button>
+  <button class="number-btn" onclick="appendValue('000')">000</button>
+  <button class="function-btn equal-btn" onclick="calculate()">=</button>
+</div>
     <div class="history" id="history"></div>
     <button class="total-btn" onclick="calculateTotal()">Hitung Semua</button>
     <div class="total-display" id="totalDisplay">Total: Rp 0</div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+  <a href="index.html" style="text-decoration: none;">
+    <button style="
+      padding: 5px 15px; 
+      background-color: #6c757d; 
+      color: white; 
+      border: none; 
+      border-radius: 5px; 
+      font-size: 14px; 
+      cursor: pointer; 
+      transition: background-color 0.3s;">
+      Kembali
+    </button>
+  </a>
+</div>
+<button class="total-btn clear-btn" onclick="clearAllHistory()">Hapus Semua History</button>
   </div>
   <script>
+    function clearAllHistory() {
+  const historyDiv = document.getElementById('history');
+  if (historyDiv.innerHTML.trim() !== "") {
+    if (confirm("Apakah Anda yakin ingin menghapus semua history?")) {
+      historyDiv.innerHTML = ''; // Hapus semua konten history
+      calculateTotal(); // Perbarui total
+    }
+  } else {
+    alert("Tidak ada history untuk dihapus.");
+  }
+}
     let currentInput = '';
 
     function formatNumber(num) {
@@ -259,6 +303,20 @@
 
       document.getElementById('totalDisplay').textContent = `Total: Rp ${formatNumber(total)}`;
     }
+    
+    function appendValue(value) {
+  if (currentInput === '0' && value === '0') {
+    return; // Cegah input lebih dari satu nol diawal
+  }
+
+  if (currentInput === '0' && !isNaN(value)) {
+    currentInput = ''; // Hapus nol awal jika input angka lain
+  }
+
+  currentInput += value;
+  document.getElementById('result').value = formatNumber(currentInput.replace(/\*/g, '×'));
+}
   </script>
+  
 </body>
 </html>
