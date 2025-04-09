@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kalkulator Sederhana</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,7 +13,7 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      background-color: #f4f4f4;
+      background-color: #666;
     }
 
     .calculator {
@@ -24,18 +25,29 @@
     }
 
     .display {
+      width: 100%;
       margin-bottom: 10px;
     }
 
     #result {
       width: 100%;
-      height: 50px;
-      font-size: 22px;
-      padding: 5px;
+      min-height: 85px;
+      font-size:30px;
+      padding: 10px;
       border: 1px solid #ccc;
       border-radius: 5px;
-      text-align: right;
       box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+      resize: none;
+      overflow-y: auto;
+      text-align: right;
+      background-color: #666;
+      box-sizing: border-box;
+      display: block;
+      font-family: 'Share Tech Mono', monospace;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      color: #000;
     }
 
     .buttons {
@@ -69,7 +81,7 @@
     }
 
     .function-btn {
-      background: #ffc107; /* Kuning gelap */
+      background: #ffc107;
       color: #000;
     }
 
@@ -78,7 +90,7 @@
     }
 
     .delete-btn {
-      background: #6c757d; /* Abu-abu */
+      background: #6c757d;
       color: #fff;
     }
 
@@ -86,13 +98,13 @@
       background: #5a6268;
     }
 
-    .function-btn.equal-btn {
-      grid-row: span 2; /* Memanjang ke bawah */
+    .equal-btn {
+      grid-column: span 4;
       background: #28a745;
       color: #fff;
     }
 
-    .function-btn.equal-btn:hover {
+    .equal-btn:hover {
       background: #1c7c31;
     }
 
@@ -122,7 +134,7 @@
     .remove-btn {
       width: 30px;
       height: 30px;
-      background: #dc3545; /* Merah */
+      background: #dc3545;
       color: #fff;
       border: none;
       border-radius: 50%;
@@ -131,10 +143,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      margin-left: 0; /* Hapus margin kiri */
-      margin-right: 0; /* Pastikan tidak ada margin kanan */
-      padding: 0; /* Tidak ada padding */
     }
 
     .remove-btn:hover {
@@ -149,13 +157,21 @@
       color: #fff;
       border: none;
       border-radius: 5px;
-      margin-top: 10px;
       cursor: pointer;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
 
     .total-btn:hover {
       background: #1c7c31;
+    }
+
+    .clear-btn {
+      background: #dc3545;
+      color: #fff;
+    }
+
+    .clear-btn:hover {
+      background: #b02a37;
     }
 
     .total-display {
@@ -165,79 +181,54 @@
       text-align: center;
       color: #333;
     }
-    .clear-btn {
-  background: #dc3545; /* Warna merah */
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 20px;
-  padding: 10px;
-  transition: background-color 0.3s;
-}
 
-.clear-btn:hover {
-  background: #b02a37; /* Warna merah lebih gelap */
-}
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
 
+    .action-buttons .total-btn {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
   <div class="calculator">
     <div class="display">
-      <input type="text" id="result" value="0" readonly>
+      <textarea id="result" onkeydown="return false;">0</textarea>
     </div>
     <div class="buttons">
-  <button class="number-btn" onclick="appendValue('1')">1</button>
-  <button class="number-btn" onclick="appendValue('2')">2</button>
-  <button class="number-btn" onclick="appendValue('3')">3</button>
-  <button class="delete-btn" onclick="clearLast()">←</button>
-  <button class="number-btn" onclick="appendValue('4')">4</button>
-  <button class="number-btn" onclick="appendValue('5')">5</button>
-  <button class="number-btn" onclick="appendValue('6')">6</button>
-  <button class="function-btn" onclick="appendValue('*')">×</button>
-  <button class="number-btn" onclick="appendValue('7')">7</button>
-  <button class="number-btn" onclick="appendValue('8')">8</button>
-  <button class="number-btn" onclick="appendValue('9')">9</button>
-  <button class="function-btn" onclick="appendValue('+')">+</button>
-  <button class="number-btn" onclick="appendValue('0')">0</button>
-  <button class="number-btn" onclick="appendValue('00')">00</button>
-  <button class="number-btn" onclick="appendValue('000')">000</button>
-  <button class="function-btn equal-btn" onclick="calculate()">=</button>
-</div>
+      <button class="number-btn" onclick="appendValue('1')">1</button>
+      <button class="number-btn" onclick="appendValue('2')">2</button>
+      <button class="number-btn" onclick="appendValue('3')">3</button>
+      <button class="delete-btn" onclick="clearLast()">←</button>
+      <button class="number-btn" onclick="appendValue('4')">4</button>
+      <button class="number-btn" onclick="appendValue('5')">5</button>
+      <button class="number-btn" onclick="appendValue('6')">6</button>
+      <button class="clear-btn" onclick="clearAll()">AC</button>
+      <button class="number-btn" onclick="appendValue('7')">7</button>
+      <button class="number-btn" onclick="appendValue('8')">8</button>
+      <button class="number-btn" onclick="appendValue('9')">9</button>
+      <button class="function-btn" onclick="appendValue('*')">×</button>
+      <button class="number-btn" onclick="appendValue('0')">0</button>
+      <button class="number-btn" onclick="appendValue('00')">00</button>
+      <button class="number-btn" onclick="appendValue('000')">000</button>
+      <button class="function-btn" onclick="appendValue('+')">+</button>
+      <button class="equal-btn" onclick="calculate()">=</button>
+    </div>
+
     <div class="history" id="history"></div>
-    <button class="total-btn" onclick="calculateTotal()">Hitung Semua</button>
+
+    <div class="action-buttons">
+      <button class="total-btn" onclick="calculateTotal()">Hitung Semua</button>
+      <button class="total-btn clear-btn" onclick="clearAllHistory()">Hapus Semua History</button>
+    </div>
+
     <div class="total-display" id="totalDisplay">Total: Rp 0</div>
-    
-    <div style="text-align: center; margin-top: 20px;">
-  <a href="index.html" style="text-decoration: none;">
-    <button style="
-      padding: 5px 15px; 
-      background-color: #6c757d; 
-      color: white; 
-      border: none; 
-      border-radius: 5px; 
-      font-size: 14px; 
-      cursor: pointer; 
-      transition: background-color 0.3s;">
-      Kembali
-    </button>
-  </a>
-</div>
-<button class="total-btn clear-btn" onclick="clearAllHistory()">Hapus Semua History</button>
   </div>
+
   <script>
-    function clearAllHistory() {
-  const historyDiv = document.getElementById('history');
-  if (historyDiv.innerHTML.trim() !== "") {
-    if (confirm("Apakah Anda yakin ingin menghapus semua history?")) {
-      historyDiv.innerHTML = ''; // Hapus semua konten history
-      calculateTotal(); // Perbarui total
-    }
-  } else {
-    alert("Tidak ada history untuk dihapus.");
-  }
-}
     let currentInput = '';
 
     function formatNumber(num) {
@@ -245,23 +236,29 @@
     }
 
     function appendValue(value) {
-      if (currentInput === '0') currentInput = ''; // Hapus 0 jika ada input baru
+      if (currentInput === '0' && value === '0') return;
+      if (currentInput === '0' && !isNaN(value)) currentInput = '';
       currentInput += value;
       document.getElementById('result').value = formatNumber(currentInput.replace(/\*/g, '×'));
     }
 
     function clearLast() {
-      currentInput = currentInput.slice(0, -1) || '0'; // Tampilkan 0 jika input kosong
+      currentInput = currentInput.slice(0, -1) || '0';
       document.getElementById('result').value = formatNumber(currentInput.replace(/\*/g, '×'));
     }
 
+    function clearAll() {
+      currentInput = '';
+      document.getElementById('result').value = '0';
+    }
+
     function calculate() {
-      if (!currentInput) currentInput = '0'; // Tambahkan angka 0 jika input kosong
+      if (!currentInput) currentInput = '0';
       try {
         const result = eval(currentInput);
         if (result !== undefined) {
           appendHistory(`${currentInput.replace(/\*/g, '×')} = ${formatNumber(result)}`);
-          currentInput = ''; // Reset input
+          currentInput = '';
         }
         document.getElementById('result').value = '0';
       } catch {
@@ -283,7 +280,7 @@
       removeBtn.textContent = '×';
       removeBtn.onclick = () => {
         newEntry.remove();
-        calculateTotal(); // Recalculate total after removing
+        calculateTotal();
       };
 
       newEntry.appendChild(entryText);
@@ -303,20 +300,18 @@
 
       document.getElementById('totalDisplay').textContent = `Total: Rp ${formatNumber(total)}`;
     }
-    
-    function appendValue(value) {
-  if (currentInput === '0' && value === '0') {
-    return; // Cegah input lebih dari satu nol diawal
-  }
 
-  if (currentInput === '0' && !isNaN(value)) {
-    currentInput = ''; // Hapus nol awal jika input angka lain
-  }
-
-  currentInput += value;
-  document.getElementById('result').value = formatNumber(currentInput.replace(/\*/g, '×'));
-}
+    function clearAllHistory() {
+      const historyDiv = document.getElementById('history');
+      if (historyDiv.innerHTML.trim() !== "") {
+        if (confirm("Apakah Anda yakin ingin menghapus semua history?")) {
+          historyDiv.innerHTML = '';
+          calculateTotal();
+        }
+      } else {
+        alert("Tidak ada history untuk dihapus.");
+      }
+    }
   </script>
-  
 </body>
 </html>
