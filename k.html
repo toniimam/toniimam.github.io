@@ -40,7 +40,7 @@
       resize: none;
       overflow-y: auto;
       text-align: right;
-      background-color: #666;
+      background-color: rgb(200, 200, 200);
       box-sizing: border-box;
       display: block;
       font-family: 'Share Tech Mono', monospace;
@@ -194,10 +194,12 @@
   </style>
 </head>
 <body>
-  <div class="calculator">
-    <div class="display">
-      <textarea id="result" onkeydown="return false;">0</textarea>
-    </div>
+<div class="calculator">
+  <img src="logo.png" alt="Logo" width="200"><br>
+  <div style="text-align: center; margin-bottom: 5px; font-family: 'Share Tech Mono', monospace;">Made in D'house</div>
+  <div class="display">
+    <textarea id="result" onkeydown="return false;">0</textarea>
+  </div>
     <div class="buttons">
       <button class="number-btn" onclick="appendValue('1')">1</button>
       <button class="number-btn" onclick="appendValue('2')">2</button>
@@ -222,7 +224,8 @@
 
     <div class="action-buttons">
       <button class="total-btn" onclick="calculateTotal()">Hitung Semua</button>
-      <button class="total-btn clear-btn" onclick="clearAllHistory()">Hapus Semua History</button>
+      <button class="total-btn clear-btn" onclick="clearAllHistory()">Hapus History</button>
+      <button class="delete-btn" onclick="window.location.href='index.html'">Home</button>
     </div>
 
     <div class="total-display" id="totalDisplay">Total: Rp 0</div>
@@ -314,4 +317,4 @@
     }
   </script>
 </body>
-</html>
+        </html>
