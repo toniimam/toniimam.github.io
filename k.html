@@ -177,11 +177,16 @@
     }
 
     .total-display {
-      margin-top: 10px;
-      font-size: 20px;
       font-weight: bold;
-      text-align: center;
-      color: #333;
+      margin-top: 20px;
+      padding: 10px;
+      background: #f9f9f9;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 20px;
+      overflow-y: auto;
+      max-height: 200px;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
 .action-buttons {
@@ -201,6 +206,11 @@
 
 .home-btn:hover {
   background: #23272b;
+}
+.cr {
+  text-align: center;
+  margin-top: 5px;
+  margin-bottom: -15px;
 }
   </style>
 </head>
@@ -232,7 +242,8 @@
       <button class="equal-btn" onclick="calculate()">=</button>
     </div>
 
-    <div class="history" id="history"></div>
+    <div class="history" id="history">
+    </div>
 
     <div class="action-buttons">
       <button class="total-btn" onclick="calculateTotal()">Hitung Semua</button>
@@ -240,7 +251,7 @@
       <button class="total-btn home-btn" onclick="window.location.href='index.html'">Home</button>
     </div>
 
-    <div class="total-display" id="totalDisplay">Total: Rp 0</div>©2023
+    <div class="total-display" id="totalDisplay">Total: Rp 0</div><div class="cr">©2023</div>
   </div>
 
   <script>
