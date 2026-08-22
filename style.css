@@ -1,0 +1,685 @@
+/* =====================================================
+   RESET
+===================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    overflow-x: hidden;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+
+    font-family: Arial, sans-serif;
+
+    background: #f4f6f8;
+    color: #1f2937;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.header {
+    background: #111827;
+    color: white;
+    padding: 20px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.header p {
+    margin: 5px 0 0;
+    color: #d1d5db;
+}
+
+
+/* =====================================================
+   CONTAINER
+===================================================== */
+
+.container {
+    width: 100%;
+    max-width: 1100px;
+
+    margin: 2px auto;
+    padding: 15px;
+}
+
+
+/* =====================================================
+   CARD
+===================================================== */
+
+.card {
+    width: 100%;
+
+    background: white;
+
+    border-radius: 14px;
+
+    padding: 18px;
+
+    margin-bottom: 15px;
+
+    box-shadow:
+        0 2px 10px rgba(0, 0, 0, .06);
+}
+
+h2 {
+    margin: 0 0 15px;
+
+    font-size: 22px;
+
+    text-align: left;
+}
+
+
+/* =====================================================
+   INPUT
+===================================================== */
+
+label {
+    display: block;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+    width: 100%;
+
+    padding: 11px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    background: white;
+
+    color: #1f2937;
+}
+
+
+/* =====================================================
+   STATS / FORM
+===================================================== */
+
+.stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 8px;
+}
+
+
+/* =====================================================
+   STATISTIK
+===================================================== */
+
+.stat {
+    min-width: 0;
+
+    padding: 15px 10px;
+}
+
+.stat small {
+    color: #6b7280;
+}
+
+.stat strong {
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 23px;
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+.status {
+    margin-top: 10px;
+
+    font-size: 14px;
+}
+
+.success {
+    color: #15803d;
+}
+
+.error {
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   BUTTON
+===================================================== */
+
+.button-row {
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 12px;
+
+    flex-wrap: wrap;
+}
+
+.main-btn {
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 10px 15px;
+
+    background: #111827;
+
+    color: white;
+
+    cursor: pointer;
+
+    font-weight: bold;
+}
+
+.main-btn:active {
+    transform: scale(.97);
+}
+
+
+/* =====================================================
+   DAFTAR STOK HEADER
+===================================================== */
+
+.stock-title {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+}
+
+.stock-title h2 {
+    margin-bottom: 0;
+}
+
+.toggle-stock-btn {
+    flex-shrink: 0;
+
+    border: none;
+
+    background: #111827;
+
+    color: white;
+
+    border-radius: 7px;
+
+    padding: 7px 11px;
+
+    font-size: 13px;
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   TOGGLE DAFTAR STOK
+===================================================== */
+
+.stock-list-content {
+    max-height: 0;
+
+    overflow: hidden;
+
+    opacity: 0;
+
+    transition:
+        max-height .35s ease,
+        opacity .25s ease;
+}
+
+.stock-list-content.show {
+    max-height: 5000px;
+
+    opacity: 1;
+}
+
+.stock-list-inner {
+    width: 100%;
+
+    min-width: 0;
+
+    padding-top: 10px;
+}
+
+
+/* =====================================================
+   TABLE WRAPPER
+===================================================== */
+
+.table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: thin;
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.table-wrapper table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    table-layout: auto;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+    padding: 7px 6px;
+
+    border-bottom:
+        1px solid #e5e7eb;
+
+    text-align: left;
+
+    vertical-align: middle;
+}
+
+.table-wrapper th {
+    background: #f3f4f6;
+
+    font-size: 13px;
+
+    white-space: nowrap;
+}
+
+.table-wrapper td {
+    font-size: 14px;
+}
+
+th {
+    background: #f3f4f6;
+}
+
+td:last-child,
+th:last-child {
+    text-align: center;
+}
+
+
+/* =====================================================
+   STOCK TABLE
+===================================================== */
+
+#stockTable {
+    min-width: 0;
+}
+
+#stockTable td:nth-child(1) {
+    width: 35px;
+
+    text-align: center;
+
+    white-space: nowrap;
+}
+
+#stockTable td:nth-child(2) {
+    width: auto;
+
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#stockTable td:nth-child(3) {
+    width: 55px;
+
+    text-align: center;
+
+    white-space: nowrap;
+
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+#stockTable td:nth-child(4) {
+    width: 125px;
+
+    white-space: nowrap;
+
+    text-align: center;
+
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+
+/* =====================================================
+   STOCK STATUS
+===================================================== */
+
+.stock-habis {
+    color: #dc2626;
+
+    font-weight: bold;
+}
+
+.stock-menipis {
+    color: #d97706;
+
+    font-weight: bold;
+}
+
+.stock-aman {
+    color: #15803d;
+
+    font-weight: bold;
+}
+
+
+/* =====================================================
+   ACTION BUTTON
+===================================================== */
+
+.action-btn {
+    border: none;
+
+    border-radius: 7px;
+
+    padding: 7px 10px;
+
+    margin: 2px;
+
+    color: white;
+
+    cursor: pointer;
+
+    font-weight: bold;
+}
+
+.btn-masuk {
+    background: #15803d;
+}
+
+.btn-laku {
+    background: #dc2626;
+}
+
+.action-btn:active {
+    transform: scale(.96);
+}
+
+
+/* =====================================================
+   HISTORY
+===================================================== */
+
+.history-table {
+    min-width: 200px;
+}
+
+
+/* =====================================================
+   EMPTY / LOADING
+===================================================== */
+
+.empty {
+    text-align: center;
+
+    color: #6b7280;
+
+    padding: 30px;
+}
+
+.loading {
+    text-align: center;
+
+    padding: 25px;
+
+    color: #6b7280;
+}
+
+
+/* =====================================================
+   DATABASE INFO
+===================================================== */
+
+.database-info {
+    background: #f0fdf4;
+
+    border: 1px solid #bbf7d0;
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    margin-top: 10px;
+}
+
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+.modal {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(0, 0, 0, .55);
+
+    z-index: 1000;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 15px;
+}
+
+.modal-content {
+    background: white;
+
+    width: 100%;
+
+    max-width: 400px;
+
+    border-radius: 15px;
+
+    padding: 20px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+}
+
+.modal-title {
+    font-size: 20px;
+
+    font-weight: bold;
+
+    margin-bottom: 8px;
+}
+
+.modal-product {
+    color: #6b7280;
+
+    margin-bottom: 18px;
+}
+
+.modal-actions {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+.modal-actions button {
+    flex: 1;
+
+    padding: 12px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.btn-confirm {
+    background: #111827;
+
+    color: white;
+}
+
+.btn-cancel {
+    background: #e5e7eb;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+footer {
+    text-align: center;
+
+    padding: 12px 10px;
+
+    margin-top: 20px;
+
+    font-size: 12px;
+
+    color: #777;
+
+    border-top: 1px solid #eee;
+}
+
+footer small {
+    display: block;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+
+    .container {
+        padding: 10px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    .stats {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+    .header {
+        padding: 17px;
+    }
+
+    .header h1 {
+        font-size: 21px;
+    }
+
+    .header p {
+        font-size: 14px;
+    }
+
+    .stock-title {
+        align-items: center;
+    }
+
+    .stock-title h2 {
+        font-size: 18px;
+
+        margin-bottom: 0;
+    }
+
+    .toggle-stock-btn {
+        padding: 7px 10px;
+    }
+
+    #stockTable th,
+    #stockTable td {
+        padding-top: 6px;
+
+        padding-bottom: 6px;
+    }
+
+    #stockTable td:nth-child(1) {
+        width: 30px;
+    }
+
+    #stockTable td:nth-child(2) {
+        padding-left: 4px;
+
+        padding-right: 4px;
+    }
+
+    #stockTable td:nth-child(3) {
+        width: 50px;
+    }
+
+    #stockTable td:nth-child(4) {
+        width: 120px;
+    }
+
+    #stockTable .action-btn {
+        padding: 5px 6px;
+
+        font-size: 11px;
+    }
+
+    th,
+    td {
+        padding: 10px;
+    }
+
+}
