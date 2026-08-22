@@ -157,7 +157,7 @@ async function loadBarang() {
     setDatabaseStatus(
         "✅ Database terhubung. " +
         dataBarang.length +
-        " barang ditemukan.",
+        " barang ditemukan, ↓Scroll kebawah↓",
         "success"
     );
 

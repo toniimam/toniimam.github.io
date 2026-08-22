@@ -24,15 +24,28 @@
 
 <header class="header">
 
-    <h1>📦 Stock Barang</h1>
+    <div class="header-content">
 
-    <p>Rekap Stok & Transaksi</p>
+        <img
+            src="logo.png"
+            alt="Logo Perusahaan"
+            class="company-logo"
+        >
+
+        <div>
+            <h1>📦 Stock Barang</h1>
+            <p>Rekap Stok & Transaksi</p>
+        </div>
+
+    </div>
 
 </header>
-
-
 <main class="container">
 
+    <!-- =====================================================
+         REKAP STOK
+    ====================================================== -->
+<div class="top-cards">
 
     <!-- =====================================================
          REKAP STOK
@@ -40,14 +53,14 @@
 
     <section class="card">
 
-        <h2>🔎 Rekap Stok</h2>
+        <h2>🛒 Barang Laku</h2>
 
-        <div class="stats">
+        <div class="status">
 
             <div>
 
                 <label for="tanggal">
-                    Tanggal
+                    &nbsp; Tanggal
                 </label>
 
                 <input
@@ -57,11 +70,10 @@
 
             </div>
 
-
             <div>
 
                 <label for="search">
-                    Cari Barang
+                    &nbsp; Cari Barang
                 </label>
 
                 <input
@@ -78,6 +90,64 @@
 
 
     <!-- =====================================================
+         BARANG DATANG
+    ====================================================== -->
+
+    <section class="card">
+
+        <h2>
+            🚚 Barang Masuk
+        </h2>
+
+        <div class="status">
+
+            <div>
+
+                <label for="namaBarang">
+                    Nama Barang
+                </label>
+
+                <input
+                    type="text"
+                    id="namaBarang"
+                    placeholder="Nama barang..."
+                >
+
+            </div>
+
+            <div>
+
+                <label for="stokAwal">
+                    Jumlah
+                </label>
+
+                <input
+                    type="number"
+                    id="stokAwal"
+                    min="0"
+                    value="0"
+                >
+
+            </div>
+
+        </div>
+
+        <div class="button-row">
+
+            <button
+                type="button"
+                class="main-btn"
+                onclick="tambahBarang()"
+            >
+                ➕ Tambah Barang
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+    <!-- =====================================================
          DAFTAR STOK
     ====================================================== -->
 
@@ -88,15 +158,6 @@
             <h2>
                 📦 Daftar Stok
             </h2>
-
-            <button
-                type="button"
-                id="toggleStockBtn"
-                class="toggle-stock-btn"
-                onclick="toggleStockList()"
-            >
-                Tampilkan
-            </button>
 
         </div>
 
@@ -111,7 +172,6 @@
 
         <div
             id="stockListContent"
-            class="stock-list-content"
         >
 
             <div class="stock-list-inner">
@@ -167,61 +227,7 @@
          BARANG DATANG
     ====================================================== -->
 
-    <section class="card">
-
-        <h2>
-            📥 Barang Datang
-        </h2>
-
-
-        <div class="stats">
-
-            <div>
-
-                <label for="namaBarang">
-                    Nama Barang
-                </label>
-
-                <input
-                    type="text"
-                    id="namaBarang"
-                    placeholder="Nama barang..."
-                >
-
-            </div>
-
-
-            <div>
-
-                <label for="stokAwal">
-                    Stok Awal
-                </label>
-
-                <input
-                    type="number"
-                    id="stokAwal"
-                    min="0"
-                    value="0"
-                >
-
-            </div>
-
-        </div>
-
-
-        <div class="button-row">
-
-            <button
-                type="button"
-                class="main-btn"
-                onclick="tambahBarang()"
-            >
-                ➕ Tambah Barang
-            </button>
-
-        </div>
-
-    </section>
+    
 
 
     <!-- =====================================================

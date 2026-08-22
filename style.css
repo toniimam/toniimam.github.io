@@ -114,7 +114,7 @@ select {
 
     border-radius: 8px;
 
-    font-size: 15px;
+    font-size: 11px;
 
     background: white;
 
@@ -615,11 +615,22 @@ footer small {
         padding: 15px;
     }
 
-    .stats {
-        grid-template-columns:
-            repeat(3, minmax(0, 1fr));
-    }
+.top-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    width: 100%;
+}
 
+.top-cards .card {
+    margin-bottom: 15px;
+}
+    .status {
+    grid-template-columns: 1fr;
+    }
+.stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
     .header {
         padding: 17px;
     }
@@ -681,5 +692,80 @@ footer small {
     td {
         padding: 10px;
     }
+    /* Rekap Stok & Barang Datang tetap bersebelahan */
+    .top-cards {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
 
+    .top-cards .card {
+        padding: 12px;
+    }
+
+    .top-cards h2 {
+        font-size: 17px;
+    }
+
+    .top-cards label {
+        font-size: 12px;
+    }
+
+    .top-cards input {
+        font-size: 11px;
+        padding: 9px;
+    }
+
+    .top-cards .main-btn {
+        width: 100%;
+        padding: 9px 5px;
+        font-size: 11px;
+    }
+}
+
+/* =====================================================
+   BATASI TINGGI TABEL DAFTAR STOK
+   TAMPILKAN MAKSIMAL ±10 BARIS
+===================================================== */
+
+#stockListContent .table-wrapper {
+    max-height: 210px;
+    overflow-y: auto;
+    overflow-x: auto;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Header tabel tetap terlihat saat scroll */
+#stockListContent .table-wrapper thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #f3f4f6;
+}
+/* =====================================================
+   KOTAK STATISTIK
+===================================================== */
+
+.stats .stat {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+}
+/* =====================================================
+   LOGO HEADER
+===================================================== */
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.company-logo {
+    width: 55px;
+    height: 55px;
+    object-fit: contain;
+    border-radius: 8px;
 }
