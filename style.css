@@ -595,10 +595,25 @@ footer {
 
     border-top: 1px solid #eee;
 }
+sd {
+    text-align: center;
+
+    margin-top: -5px;
+
+    margin-bottom: 5px;
+
+    font-size: 12px;
+
+    color: #777;
+
+    border-bottom: 1px solid #eee;
+}
+
 
 footer small {
     display: block;
 }
+
 
 
 /* =====================================================
@@ -764,8 +779,8 @@ footer small {
 }
 
 .company-logo {
-    width: 100px;
-    height: 100px;
+    width: 55px;
+    height: 55px;
     object-fit: contain;
     border-radius: 8px;
 }
