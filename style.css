@@ -134,6 +134,15 @@ select {
 
     gap: 8px;
 }
+.cari {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 8px;
+}
+
 
 
 /* =====================================================
@@ -144,6 +153,9 @@ select {
     min-width: 0;
 
     padding: 15px 10px;
+}
+.cari {
+    min-width: 0px;
 }
 
 .stat small {
@@ -282,22 +294,6 @@ select {
 
 
 /* =====================================================
-   TABLE WRAPPER
-===================================================== */
-
-.table-wrapper {
-    width: 100%;
-
-    overflow-x: auto;
-    overflow-y: hidden;
-
-    -webkit-overflow-scrolling: touch;
-
-    scrollbar-width: thin;
-}
-
-
-/* =====================================================
    TABLE
 ===================================================== */
 
@@ -307,14 +303,17 @@ select {
     border-collapse: collapse;
 
     table-layout: auto;
+
+    border: 1px solid #cbd5e1;
+
+    background: #ffffff;
 }
 
 .table-wrapper th,
 .table-wrapper td {
     padding: 7px 6px;
 
-    border-bottom:
-        1px solid #e5e7eb;
+    border: 1px solid #cbd5e1;
 
     text-align: left;
 
@@ -326,15 +325,23 @@ select {
 
     font-size: 13px;
 
+    font-weight: bold;
+
     white-space: nowrap;
+
+    border-bottom: 2px solid #94a3b8;
 }
 
 .table-wrapper td {
     font-size: 14px;
 }
 
-th {
-    background: #f3f4f6;
+.table-wrapper tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+.table-wrapper tbody tr:hover {
+    background: #f1f5f9;
 }
 
 td:last-child,
@@ -646,6 +653,9 @@ footer small {
 .stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+.cari {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
     .header {
         padding: 17px;
     }
@@ -749,7 +759,35 @@ footer small {
 
     -webkit-overflow-scrolling: touch;
 }
+/* =====================================================
+   BATASI TINGGI TABEL RIWAYAT TRANSAKSI
+===================================================== */
 
+.history-table {
+    width: 100%;
+}
+
+/* Area tabel riwayat dibuat terbatas */
+.history-table {
+    display: table;
+}
+
+/* Scroll khusus tabel riwayat */
+.card:has(.history-table) .table-wrapper {
+    max-height: 210px;
+    overflow-y: auto;
+    overflow-x: auto;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Header tetap terlihat saat scroll */
+.card:has(.history-table) .table-wrapper thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #f3f4f6;
+}
 /* Header tabel tetap terlihat saat scroll */
 #stockListContent .table-wrapper thead th {
     position: sticky;
@@ -766,8 +804,16 @@ footer small {
     border: 1px solid #e5e7eb;
     border-radius: 10px;
     padding: 12px;
-    text-align: center;
-}
+    text-align: center;}
+  
+.cari {
+    background: #f8fafc;
+    
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;}
+
+  
 /* =====================================================
    LOGO HEADER
 ===================================================== */
@@ -783,4 +829,31 @@ footer small {
     height: 55px;
     object-fit: contain;
     border-radius: 8px;
+}
+/* =====================================================
+   BATASI TABEL RIWAYAT TRANSAKSI
+===================================================== */
+
+.history-wrapper {
+    max-height: 210px;
+    overflow-y: auto;
+    overflow-x: auto;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Header tetap terlihat saat scroll */
+.history-wrapper thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #f3f4f6;
+}
+.history-masuk {
+    color: #0a0;  
+}
+
+.history-laku {
+    color: #a00;
+    
 }
