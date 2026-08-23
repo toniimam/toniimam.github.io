@@ -32,6 +32,25 @@ let selectedTransactionType = "";
 
 
 /* =====================================================
+   SORTING
+===================================================== */
+
+/*
+   Default:
+   Nama barang A-Z
+
+   Setelah kolom stok diklik:
+   Stok terbesar -> terkecil
+   Klik lagi:
+   Stok terkecil -> terbesar
+*/
+
+let sortMode = "nama";
+
+let stockSortAsc = false;
+
+
+/* =====================================================
    FORMAT ANGKA
 ===================================================== */
 
@@ -46,38 +65,6 @@ function formatNumber(number) {
     return new Intl.NumberFormat(
         "id-ID"
     ).format(value);
-
-}
-
-
-/* =====================================================
-   TANGGAL HARI INI
-===================================================== */
-
-function getTodayDate() {
-
-    const now = new Date();
-
-    const year =
-        now.getFullYear();
-
-    const month =
-        String(
-            now.getMonth() + 1
-        ).padStart(2, "0");
-
-    const day =
-        String(
-            now.getDate()
-        ).padStart(2, "0");
-
-    return (
-        year +
-        "-" +
-        month +
-        "-" +
-        day
-    );
 
 }
 
@@ -372,8 +359,14 @@ function getCurrentStock(barang) {
             }
 
 
+            /* =========================================
+               HANYA HITUNG TRANSAKSI SAMPAI TANGGAL
+               YANG DIPILIH
+            ========================================= */
+
             if (
                 tanggalDipilih &&
+                transaction.tanggal &&
                 transaction.tanggal >
                 tanggalDipilih
             ) {
@@ -428,6 +421,7 @@ function updateTable() {
             "stockTable"
         );
 
+
     const searchElement =
         document.getElementById(
             "search"
@@ -445,6 +439,10 @@ function updateTable() {
             .trim();
 
 
+    /* =================================================
+       BELUM ADA BARANG
+    ================================================= */
+
     if (
         dataBarang.length === 0
     ) {
@@ -452,6 +450,7 @@ function updateTable() {
         tbody.innerHTML =
             `
             <tr>
+
                 <td
                     colspan="4"
                     class="empty"
@@ -459,6 +458,7 @@ function updateTable() {
                     Belum ada barang.<br>
                     Silakan tambahkan barang.
                 </td>
+
             </tr>
             `;
 
@@ -468,6 +468,10 @@ function updateTable() {
 
     }
 
+
+    /* =================================================
+       FILTER PENCARIAN
+    ================================================= */
 
     const filtered =
         dataBarang.filter(
@@ -483,6 +487,77 @@ function updateTable() {
         );
 
 
+    /* =================================================
+       SORTING
+    ================================================= */
+
+    if (
+        sortMode === "nama"
+    ) {
+
+        /* ---------------------------------------------
+           DEFAULT: NAMA A-Z
+        --------------------------------------------- */
+
+        filtered.sort(
+            function(a, b) {
+
+                return String(
+                    a.nama
+                ).localeCompare(
+                    String(b.nama),
+                    "id",
+                    {
+                        sensitivity: "base"
+                    }
+                );
+
+            }
+        );
+
+    } else {
+
+        /* ---------------------------------------------
+           SORTING BERDASARKAN STOK
+        --------------------------------------------- */
+
+        filtered.sort(
+            function(a, b) {
+
+                const stokA =
+                    getCurrentStock(a);
+
+                const stokB =
+                    getCurrentStock(b);
+
+
+                if (
+                    stockSortAsc
+                ) {
+
+                    return (
+                        stokA -
+                        stokB
+                    );
+
+                }
+
+
+                return (
+                    stokB -
+                    stokA
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       HASIL PENCARIAN KOSONG
+    ================================================= */
+
     if (
         filtered.length === 0
     ) {
@@ -490,12 +565,14 @@ function updateTable() {
         tbody.innerHTML =
             `
             <tr>
+
                 <td
                     colspan="4"
                     class="empty"
                 >
                     Barang tidak ditemukan.
                 </td>
+
             </tr>
             `;
 
@@ -506,8 +583,16 @@ function updateTable() {
     }
 
 
+    /* =================================================
+       BERSIHKAN TABEL
+    ================================================= */
+
     tbody.innerHTML = "";
 
+
+    /* =================================================
+       TAMPILKAN DATA
+    ================================================= */
 
     filtered.forEach(
         function(barang, index) {
@@ -522,12 +607,16 @@ function updateTable() {
                 "stock-aman";
 
 
-            if (stok <= 0) {
+            if (
+                stok <= 0
+            ) {
 
                 statusClass =
                     "stock-habis";
 
-            } else if (stok <= 5) {
+            } else if (
+                stok <= 5
+            ) {
 
                 statusClass =
                     "stock-menipis";
@@ -553,8 +642,12 @@ function updateTable() {
                     )}
                 </td>
 
-                <td class="${statusClass}">
-                    ${formatNumber(stok)}
+                <td
+                    class="${statusClass}"
+                >
+                    ${formatNumber(
+                        stok
+                    )}
                 </td>
 
                 <td>
@@ -569,6 +662,7 @@ function updateTable() {
                     >
                         ➕ Masuk
                     </button>
+
 
                     <button
                         type="button"
@@ -585,7 +679,9 @@ function updateTable() {
                 `;
 
 
-            tbody.appendChild(tr);
+            tbody.appendChild(
+                tr
+            );
 
         }
     );
@@ -595,6 +691,52 @@ function updateTable() {
 
 }
 
+
+/* =====================================================
+   SORTIR STOK
+===================================================== */
+
+function sortStock() {
+
+    /*
+       Saat pertama kali klik:
+       stok terbesar -> terkecil
+
+       Klik berikutnya:
+       terkecil -> terbesar
+    */
+
+    sortMode =
+        "stok";
+
+
+    stockSortAsc =
+        !stockSortAsc;
+
+
+    const header =
+        document.getElementById(
+            "stokHeader"
+        );
+
+
+    if (header) {
+
+        header.textContent =
+            stockSortAsc
+                ? "Stok ↑"
+                : "Stok ↓";
+
+    }
+
+
+    updateTable();
+
+}
+function sortNama() {
+    sortMode = "nama";
+    updateTable();
+}
 
 /* =====================================================
    STATISTIK
@@ -617,32 +759,67 @@ function updateStats() {
     );
 
 
+    /* ================================================
+       TRANSAKSI HARI INI
+    ================================================ */
+
+    const sekarang =
+        new Date();
+
+
     const transaksiHariIni =
         transactions.filter(
             function(transaction) {
 
-                if (!tanggalDipilih) {
+                if (
+                    !transaction.created_at
+                ) {
+
                     return false;
+
                 }
 
+
+                const waktu =
+                    new Date(
+                        transaction.created_at
+                    );
+
+
                 return (
-                    transaction.tanggal ===
-                    tanggalDipilih
+                    waktu.getFullYear() ===
+                    sekarang.getFullYear()
+
+                    &&
+
+                    waktu.getMonth() ===
+                    sekarang.getMonth()
+
+                    &&
+
+                    waktu.getDate() ===
+                    sekarang.getDate()
                 );
 
             }
         ).length;
 
 
+    /* ================================================
+       ELEMENT
+    ================================================ */
+
     const totalBarangElement =
         document.getElementById(
             "totalBarang"
         );
 
+
     const totalStokElement =
         document.getElementById(
             "totalStok"
         );
+
 
     const transaksiElement =
         document.getElementById(
@@ -650,7 +827,13 @@ function updateStats() {
         );
 
 
-    if (totalBarangElement) {
+    /* ================================================
+       TAMPILKAN
+    ================================================ */
+
+    if (
+        totalBarangElement
+    ) {
 
         totalBarangElement.textContent =
             formatNumber(
@@ -660,7 +843,9 @@ function updateStats() {
     }
 
 
-    if (totalStokElement) {
+    if (
+        totalStokElement
+    ) {
 
         totalStokElement.textContent =
             formatNumber(
@@ -670,7 +855,9 @@ function updateStats() {
     }
 
 
-    if (transaksiElement) {
+    if (
+        transaksiElement
+    ) {
 
         transaksiElement.textContent =
             formatNumber(
@@ -721,6 +908,7 @@ function openTransaction(
     selectedProduct =
         barang.id;
 
+
     selectedTransactionType =
         type;
 
@@ -730,10 +918,12 @@ function openTransaction(
             "transactionModal"
         );
 
+
     const title =
         document.getElementById(
             "modalTitle"
         );
+
 
     const product =
         document.getElementById(
@@ -772,6 +962,7 @@ function closeModal() {
         document.getElementById(
             "transactionModal"
         );
+
 
     modal.style.display =
         "none";
@@ -835,6 +1026,10 @@ async function confirmTransaction() {
     }
 
 
+    /* =================================================
+       CEK STOK BARANG LAKU
+    ================================================= */
+
     if (
         selectedTransactionType ===
         "laku"
@@ -846,7 +1041,9 @@ async function confirmTransaction() {
             );
 
 
-        if (qty > stok) {
+        if (
+            qty > stok
+        ) {
 
             alert(
                 "Jumlah barang laku melebihi stok.\n\n" +
@@ -861,10 +1058,9 @@ async function confirmTransaction() {
     }
 
 
-    const tanggal =
-        tanggalDipilih ||
-        getTodayDate();
-
+    /* =================================================
+       SIMPAN KE SUPABASE
+    ================================================= */
 
     const {
         error
@@ -877,7 +1073,8 @@ async function confirmTransaction() {
                     barang.id,
 
                 tanggal:
-                    tanggal,
+                    tanggalDipilih ||
+                    getTodayDate(),
 
                 type:
                     selectedTransactionType,
@@ -890,12 +1087,16 @@ async function confirmTransaction() {
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
+
 
         alert(
             "Gagal menyimpan transaksi:\n" +
             error.message
         );
+
 
         return;
 
@@ -950,11 +1151,26 @@ function renderHistory() {
     }
 
 
-    const history =
-        [...transactions].reverse();
+ const history = [...transactions].sort((a, b) => {
+    const tanggalA = new Date(
+        a.tanggal + "T00:00:00"
+    );
+
+    const tanggalB = new Date(
+        b.tanggal + "T00:00:00"
+    );
+
+    if (tanggalB - tanggalA !== 0) {
+        return tanggalB - tanggalA;
+    }
+
+    return new Date(b.created_at) -
+           new Date(a.created_at);
+});
 
 
-    tbody.innerHTML = "";
+    tbody.innerHTML =
+        "";
 
 
     history.forEach(
@@ -984,24 +1200,31 @@ function renderHistory() {
 
 
             const typeText =
-                transaction.type === "masuk"
+                transaction.type ===
+                "masuk"
+
                     ? "➕ Barang Masuk"
+
                     : "🛒 Barang Laku";
 
 
             const qtyText =
-                transaction.type === "masuk"
+                transaction.type ===
+                "masuk"
+
                     ? "+" +
                       formatNumber(
                           transaction.qty
                       )
+
                     : "-" +
                       formatNumber(
                           transaction.qty
                       );
 
 
-            let stokAkhir = "-";
+            let stokAkhir =
+                "-";
 
 
             if (barang) {
@@ -1016,12 +1239,15 @@ function renderHistory() {
 
 
             const waktu =
-                transaction.created_at
+                transaction.tanggal
+
                     ? new Date(
-                        transaction.created_at
-                    ).toLocaleString(
+                        transaction.tanggal +
+                        "T00:00:00"
+                    ).toLocaleDateString(
                         "id-ID"
                     )
+
                     : "-";
 
 
@@ -1034,7 +1260,9 @@ function renderHistory() {
             tr.innerHTML =
                 `
                 <td>
-                    ${escapeHTML(waktu)}
+                    ${escapeHTML(
+                        waktu
+                    )}
                 </td>
 
                 <td>
@@ -1042,10 +1270,10 @@ function renderHistory() {
                         namaBarang
                     )}
                 </td>
+                <td class="${transaction.type === "masuk" ? "history-masuk" : "history-laku"}">
+    ${typeText}
+</td>
 
-                <td>
-                    ${typeText}
-                </td>
 
                 <td>
                     ${qtyText}
@@ -1059,7 +1287,9 @@ function renderHistory() {
                 `;
 
 
-            tbody.appendChild(tr);
+            tbody.appendChild(
+                tr
+            );
 
         }
     );
@@ -1100,32 +1330,15 @@ function getStockAfterTransaction(
 
 
             if (
-                transaction.tanggal >
-                targetTransaction.tanggal
+                new Date(
+                    transaction.created_at
+                ) >
+                new Date(
+                    targetTransaction.created_at
+                )
             ) {
 
                 return;
-
-            }
-
-
-            if (
-                transaction.tanggal ===
-                targetTransaction.tanggal
-            ) {
-
-                if (
-                    new Date(
-                        transaction.created_at
-                    ) >
-                    new Date(
-                        targetTransaction.created_at
-                    )
-                ) {
-
-                    return;
-
-                }
 
             }
 
@@ -1205,29 +1418,12 @@ function escapeHTML(text) {
 ===================================================== */
 
 document
-    .getElementById("search")
+    .getElementById(
+        "search"
+    )
     .addEventListener(
         "input",
         updateTable
-    );
-
-
-/* =====================================================
-   PILIH TANGGAL
-===================================================== */
-
-document
-    .getElementById("tanggal")
-    .addEventListener(
-        "change",
-        function() {
-
-            tanggalDipilih =
-                this.value;
-
-            updateTable();
-
-        }
     );
 
 
@@ -1242,10 +1438,21 @@ function toggleStockList() {
             "stockListContent"
         );
 
+
     const button =
         document.getElementById(
             "toggleStockBtn"
         );
+
+
+    if (
+        !content ||
+        !button
+    ) {
+
+        return;
+
+    }
 
 
     const isOpen =
@@ -1293,7 +1500,9 @@ window.addEventListener(
 ===================================================== */
 
 document
-    .getElementById("stokAwal")
+    .getElementById(
+        "stokAwal"
+    )
     .addEventListener(
         "keydown",
         function(event) {
@@ -1331,6 +1540,71 @@ document.addEventListener(
 
 
 /* =====================================================
+   TANGGAL HARI INI
+===================================================== */
+
+function getTodayDate() {
+
+    const now =
+        new Date();
+
+
+    const year =
+        now.getFullYear();
+
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    return (
+        year +
+        "-" +
+        month +
+        "-" +
+        day
+    );
+
+}
+
+
+/* =====================================================
+   PILIH TANGGAL
+===================================================== */
+
+document
+    .getElementById(
+        "tanggal"
+    )
+    .addEventListener(
+        "change",
+        function() {
+
+            tanggalDipilih =
+                this.value;
+
+
+            updateTable();
+
+        }
+    );
+
+
+/* =====================================================
    INIT
 ===================================================== */
 
@@ -1348,9 +1622,207 @@ async function init() {
 
     await loadBarang();
 
+
     await loadTransactions();
 
 }
 
 
 init();
+async function exportExcel() {
+    if (typeof XLSX === "undefined") {
+        alert("Library Excel belum dimuat.");
+        return;
+    }
+
+    if (!dataBarang.length) {
+        alert("Tidak ada data barang.");
+        return;
+    }
+
+    const now = new Date();
+    const tahun = now.getFullYear();
+    const bulan = now.getMonth();
+    const hariIni = now.getDate();
+
+    const namaBulan = [
+        "Januari","Februari","Maret","April","Mei","Juni",
+        "Juli","Agustus","September","Oktober","November","Desember"
+    ];
+
+    const jumlahHari =
+        new Date(tahun, bulan + 1, 0).getDate();
+
+    const rows = [];
+
+    rows.push([
+        namaBulan[bulan] + "-" + tahun
+    ]);
+
+    rows.push([
+        "Nama Barang",
+        ...Array.from(
+            { length: jumlahHari },
+            (_, i) =>
+                i + 1 <= hariIni
+                    ? `${i + 1}/${bulan + 1}`
+                    : ""
+        )
+    ]);
+
+    dataBarang.forEach(barang => {
+
+        const stokHariIni =
+            getCurrentStock(barang);
+
+        const jumlahBaris =
+            Math.max(0, Math.floor(stokHariIni));
+
+        if (jumlahBaris === 0) {
+            return;
+        }
+
+        const stokAwal =
+            Number(barang.stok_awal) || 0;
+
+        const transaksiBarang =
+            transactions
+                .filter(t =>
+                    Number(t.barang_id) ===
+                    Number(barang.id)
+                );
+
+        const stokPerHari = [];
+        let stok = stokAwal;
+
+        for (let hari = 1; hari <= hariIni; hari++) {
+
+            const tanggal =
+                `${tahun}-${String(bulan + 1).padStart(2, "0")}-${String(hari).padStart(2, "0")}`;
+
+            const transaksiHari =
+                transaksiBarang.filter(t =>
+                    t.tanggal === tanggal
+                );
+
+            let perubahan = 0;
+
+            transaksiHari.forEach(t => {
+                const qty =
+                    Number(t.qty) || 0;
+
+                perubahan +=
+                    t.type === "masuk"
+                        ? qty
+                        : -qty;
+            });
+
+            if (transaksiHari.length > 0) {
+                stok += perubahan;
+
+                stokPerHari.push({
+                    perubahan,
+                    stok
+                });
+            } else {
+                stokPerHari.push({
+                    perubahan: null,
+                    stok
+                });
+            }
+        }
+
+        for (let i = 0; i < jumlahBaris; i++) {
+
+            const row = [barang.nama];
+
+            for (let hari = 1; hari <= jumlahHari; hari++) {
+
+                if (hari > hariIni) {
+                    row.push("");
+                    continue;
+                }
+
+                const data =
+                    stokPerHari[hari - 1];
+
+                if (data.perubahan !== null) {
+                    row.push(data.perubahan);
+                } else {
+                    row.push(data.stok);
+                }
+            }
+
+            rows.push(row);
+        }
+    });
+
+    const worksheet =
+        XLSX.utils.aoa_to_sheet(rows);
+
+    const workbook =
+        XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "Rekap Stok"
+    );
+
+    worksheet["A1"] = {
+        v: namaBulan[bulan] + "-" + tahun,
+        t: "s"
+    };
+
+    worksheet["!merges"] = [{
+        s: { r: 0, c: 0 },
+        e: { r: 0, c: jumlahHari }
+    }];
+
+    worksheet["!cols"] = [
+        { wch: 30 },
+        ...Array.from(
+            { length: jumlahHari },
+            () => ({ wch: 8 })
+        )
+    ];
+
+    for (let r = 2; r < rows.length; r++) {
+        for (let c = 1; c <= hariIni; c++) {
+
+            const cell =
+                worksheet[
+                    XLSX.utils.encode_cell({
+                        r,
+                        c
+                    })
+                ];
+
+            if (!cell) continue;
+
+            if (typeof cell.v === "number") {
+
+                if (cell.v < 0) {
+                    cell.s = {
+                        fill: {
+                            fgColor: {
+                                rgb: "FFC7CE"
+                            }
+                        },
+                        font: {
+                            color: {
+                                rgb: "9C0006"
+                            },
+                            bold: true
+                        }
+                    };
+                }
+            }
+        }
+    }
+
+    XLSX.writeFile(
+        workbook,
+        `Rekap-Stok-${namaBulan[bulan]}-${tahun}.xlsx`
+    );
+}
