@@ -759,7 +759,7 @@ footer small {
 
 .header-content {
     display: flex;
-    align-items: center;
+    align-items: left;
     gap: 12px;
 }
 
