@@ -1629,14 +1629,10 @@ async function init() {
 
 
 init();
-async function exportExcel() {
+                    async function exportExcel() {
+
     if (typeof XLSX === "undefined") {
         alert("Library Excel belum dimuat.");
-        return;
-    }
-
-    if (!dataBarang.length) {
-        alert("Tidak ada data barang.");
         return;
     }
 
@@ -1653,115 +1649,117 @@ async function exportExcel() {
     const jumlahHari =
         new Date(tahun, bulan + 1, 0).getDate();
 
-    const rows = [];
+    const dataExcel = [];
 
-    rows.push([
-        namaBulan[bulan] + "-" + tahun
-    ]);
+    /* ================================
+       BARIS HEADER
+    ================================= */
 
-    rows.push([
-        "Nama Barang",
-        ...Array.from(
-            { length: jumlahHari },
-            (_, i) =>
-                i + 1 <= hariIni
-                    ? `${i + 1}/${bulan + 1}`
-                    : ""
-        )
-    ]);
+    const header = [
+        `${namaBulan[bulan]}-${tahun}`
+    ];
 
-    dataBarang.forEach(barang => {
+    for (let hari = 1; hari <= jumlahHari; hari++) {
+        header.push(`${hari}/${bulan + 1}`);
+    }
 
-        const stokHariIni =
-            getCurrentStock(barang);
+    dataExcel.push(header);
 
-        const jumlahBaris =
-            Math.max(0, Math.floor(stokHariIni));
 
-        if (jumlahBaris === 0) {
-            return;
-        }
+    /* ================================
+       DATA BARANG
+    ================================= */
 
-        const stokAwal =
+    dataBarang.forEach(function(barang) {
+
+        const row = [barang.nama];
+
+        let stok =
             Number(barang.stok_awal) || 0;
 
-        const transaksiBarang =
-            transactions
-                .filter(t =>
-                    Number(t.barang_id) ===
-                    Number(barang.id)
-                );
 
-        const stokPerHari = [];
-        let stok = stokAwal;
+        for (let hari = 1; hari <= jumlahHari; hari++) {
 
-        for (let hari = 1; hari <= hariIni; hari++) {
+            /* Setelah hari ini kosong */
+            if (hari > hariIni) {
+                row.push("");
+                continue;
+            }
+
 
             const tanggal =
                 `${tahun}-${String(bulan + 1).padStart(2, "0")}-${String(hari).padStart(2, "0")}`;
 
+
+            /* Transaksi pada tanggal tersebut */
             const transaksiHari =
-                transaksiBarang.filter(t =>
-                    t.tanggal === tanggal
-                );
+                transactions.filter(function(transaction) {
+
+                    return (
+                        Number(transaction.barang_id) ===
+                        Number(barang.id)
+                        &&
+                        transaction.tanggal === tanggal
+                    );
+
+                });
+
 
             let perubahan = 0;
 
-            transaksiHari.forEach(t => {
-                const qty =
-                    Number(t.qty) || 0;
 
-                perubahan +=
-                    t.type === "masuk"
-                        ? qty
-                        : -qty;
+            transaksiHari.forEach(function(transaction) {
+
+                const qty =
+                    Number(transaction.qty) || 0;
+
+
+                if (transaction.type === "masuk") {
+                    perubahan += qty;
+                }
+
+                if (transaction.type === "laku") {
+                    perubahan -= qty;
+                }
+
             });
 
+
+            /* =========================
+               JIKA ADA TRANSAKSI
+            ========================= */
+
             if (transaksiHari.length > 0) {
+
+                row.push(perubahan);
+
                 stok += perubahan;
 
-                stokPerHari.push({
-                    perubahan,
-                    stok
-                });
             } else {
-                stokPerHari.push({
-                    perubahan: null,
-                    stok
-                });
-            }
-        }
 
-        for (let i = 0; i < jumlahBaris; i++) {
+                /* Tidak ada transaksi */
+                row.push(stok);
 
-            const row = [barang.nama];
-
-            for (let hari = 1; hari <= jumlahHari; hari++) {
-
-                if (hari > hariIni) {
-                    row.push("");
-                    continue;
-                }
-
-                const data =
-                    stokPerHari[hari - 1];
-
-                if (data.perubahan !== null) {
-                    row.push(data.perubahan);
-                } else {
-                    row.push(data.stok);
-                }
             }
 
-            rows.push(row);
         }
+
+
+        dataExcel.push(row);
+
     });
 
+
+    /* ================================
+       BUAT WORKBOOK
+    ================================= */
+
     const worksheet =
-        XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.aoa_to_sheet(dataExcel);
 
     const workbook =
         XLSX.utils.book_new();
+
 
     XLSX.utils.book_append_sheet(
         workbook,
@@ -1769,60 +1767,233 @@ async function exportExcel() {
         "Rekap Stok"
     );
 
-    worksheet["A1"] = {
-        v: namaBulan[bulan] + "-" + tahun,
-        t: "s"
-    };
 
-    worksheet["!merges"] = [{
-        s: { r: 0, c: 0 },
-        e: { r: 0, c: jumlahHari }
-    }];
+    /* ================================
+       MERGE A1 SAMPAI AKHIR BULAN
+    ================================= */
 
-    worksheet["!cols"] = [
-        { wch: 30 },
-        ...Array.from(
-            { length: jumlahHari },
-            () => ({ wch: 8 })
-        )
+    worksheet["!merges"] = [
+        {
+            s: { r: 0, c: 0 },
+            e: {
+                r: 0,
+                c: jumlahHari
+            }
+        }
     ];
 
-    for (let r = 2; r < rows.length; r++) {
-        for (let c = 1; c <= hariIni; c++) {
+
+    /* ================================
+       LEBAR KOLOM
+    ================================= */
+
+    const widths = [
+        {
+            wch: 35
+        }
+    ];
+
+    for (let i = 0; i < jumlahHari; i++) {
+        widths.push({
+            wch: 7
+        });
+    }
+
+    worksheet["!cols"] = widths;
+
+
+    /* ================================
+       STYLE CELL
+    ================================= */
+
+    for (let r = 0; r < dataExcel.length; r++) {
+
+        for (let c = 0; c < dataExcel[r].length; c++) {
+
+            const cellAddress =
+                XLSX.utils.encode_cell({
+                    r: r,
+                    c: c
+                });
 
             const cell =
-                worksheet[
-                    XLSX.utils.encode_cell({
-                        r,
-                        c
-                    })
-                ];
+                worksheet[cellAddress];
 
             if (!cell) continue;
 
-            if (typeof cell.v === "number") {
 
-                if (cell.v < 0) {
-                    cell.s = {
-                        fill: {
-                            fgColor: {
-                                rgb: "FFC7CE"
-                            }
+            /* Header */
+            if (r === 0) {
+
+                cell.s = {
+                    font: {
+                        bold: true
+                    },
+                    alignment: {
+                        horizontal: "center",
+                        vertical: "center"
+                    }
+                };
+
+                continue;
+            }
+
+
+            /* Nama barang */
+            if (c === 0) {
+
+                cell.s = {
+                    alignment: {
+                        vertical: "center"
+                    }
+                };
+
+                continue;
+            }
+
+
+            const value =
+                Number(cell.v);
+
+
+            /* BARANG LAKU */
+            if (
+                Number.isFinite(value) &&
+                value < 0
+            ) {
+
+                cell.s = {
+                    font: {
+                        color: {
+                            rgb: "FFFFFF"
                         },
+                        bold: true
+                    },
+                    fill: {
+                        fgColor: {
+                            rgb: "C00000"
+                        }
+                    },
+                    alignment: {
+                        horizontal: "center",
+                        vertical: "center"
+                    }
+                };
+
+            }
+
+
+            /* BARANG MASUK */
+            else if (
+                Number.isFinite(value) &&
+                value > 0
+            ) {
+
+                /*
+                 * Hanya diberi hijau jika
+                 * nilai tersebut merupakan
+                 * transaksi masuk.
+                 */
+
+                const barang =
+                    dataBarang[r - 1];
+
+                const tanggalIndex =
+                    c - 1;
+
+                const tanggal =
+                    `${tahun}-${String(bulan + 1).padStart(2, "0")}-${String(tanggalIndex + 1).padStart(2, "0")}`;
+
+                const adaMasuk =
+                    transactions.some(function(transaction) {
+
+                        return (
+                            Number(transaction.barang_id) ===
+                            Number(barang.id)
+                            &&
+                            transaction.tanggal ===
+                            tanggal
+                            &&
+                            transaction.type ===
+                            "masuk"
+                        );
+
+                    });
+
+                if (adaMasuk) {
+
+                    cell.s = {
                         font: {
                             color: {
-                                rgb: "9C0006"
+                                rgb: "006100"
                             },
                             bold: true
+                        },
+                        fill: {
+                            fgColor: {
+                                rgb: "C6EFCE"
+                            }
+                        },
+                        alignment: {
+                            horizontal: "center",
+                            vertical: "center"
                         }
                     };
+
+                } else {
+
+                    cell.s = {
+                        alignment: {
+                            horizontal: "center",
+                            vertical: "center"
+                        }
+                    };
+
                 }
+
             }
+
         }
+
     }
 
-    XLSX.writeFile(
-        workbook,
-        `Rekap-Stok-${namaBulan[bulan]}-${tahun}.xlsx`
-    );
-}
+
+    /* ================================
+       EXPORT
+    ================================= */
+
+    const excelData =
+        XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array"
+        });
+
+    const blob =
+        new Blob(
+            [excelData],
+            {
+                type:
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+        `Rekap-Stok-${namaBulan[bulan]}-${tahun}.xlsx`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+        }
