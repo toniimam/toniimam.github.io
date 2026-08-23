@@ -31,145 +31,20 @@
             alt="Logo Perusahaan"
             class="company-logo"
         >
-
         <div>
             <h1>📦 Stock Barang</h1>
             <p>&nbsp;Rekap Stok & Transaksi</p>
         </div> 
-
     </div>
-
 </header>
 <main class="container">
 
-    <!-- =====================================================
-         REKAP STOK
-    ====================================================== -->
-<div class="top-cards">
-
-    <!-- =====================================================
-         REKAP STOK
-    ====================================================== -->
-
-    <section class="card">
-
-        <h2>🛒 Barang Laku</h2>
-
-        <div class="status">
-
-            <div>
-
-                <label for="tanggal">
-                    &nbsp; Tanggal
-                </label>
-
-                <input
-                    type="date"
-                    id="tanggal"
-                >
-
-            </div>
-
-            <div>
-
-                <label for="search">
-                    &nbsp; Cari Barang
-                </label>
-
-                <input
-                    type="text"
-                    id="search"
-                    placeholder="Ketik nama barang..."
-                >
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         BARANG DATANG
-    ====================================================== -->
-
-    <section class="card">
-
-        <h2>
-            🚚 Barang Masuk
-        </h2>
-
-        <div class="status">
-
-            <div>
-
-                <label for="namaBarang">
-                    Nama Barang
-                </label>
-
-                <input
-                    type="text"
-                    id="namaBarang"
-                    placeholder="Nama barang..."
-                >
-
-            </div>
-
-            <div>
-
-                <label for="stokAwal">
-                    Jumlah
-                </label>
-
-                <input
-                    type="number"
-                    id="stokAwal"
-                    min="0"
-                    value="0"
-                >
-
-            </div>
-
-        </div>
-
-        <div class="button-row">
-
-            <button
-                type="button"
-                class="main-btn"
-                onclick="tambahBarang()"
-            >
-                ➕ Tambah Barang
-            </button>
-
-        </div>
-
-    </section>
-</div>
-  
-    <!-- =====================================================
-         DAFTAR STOK
-    ====================================================== -->
-
-    <section class="card">
-
-        <div class="stock-title">
-
-            <h2>
-                📦 Daftar Stok
-            </h2>
-
-        </div>
-
-
-        <div
-            id="databaseStatus"
+<section class="card">
+  <div id="databaseStatus"
             class="status"
         >
             ⏳ Menghubungkan ke database...
-        </div>
-
-
+  </div>
         <div
             id="stockListContent"
         >
@@ -186,9 +61,21 @@
 
                                 <th>No</th>
 
-                                <th>Nama Barang</th>
+                                <th
+    id="namaHeader"
+    onclick="sortNama()"
+    style="cursor:pointer;"
+>
+    Nama Barang
+</th>
 
-                                <th>Stok</th>
+                                <th
+    id="stokHeader"
+    onclick="sortStock()"
+    style="cursor: pointer;"
+>
+    Stok ↓
+                                </th>
 
                                 <th>Aksi</th>
 
@@ -220,13 +107,120 @@
 
         </div>
 
-    </section>
+      <div class="cari">
+    <input type="text"
+          id="search"
+          placeholder="Filter Produk...">
+    <input
+        type="date"
+        id="tanggal"
+    ></div>
+</section>
+  <section class="card">
+        <h2>
+            📜 Riwayat Transaksi
+          <button
+    type="button"
+    class="main-btn"
+    onclick="exportExcel()"
+>
+    📊 Export Excel
+</button>
+        </h2>
+            <div class="table-wrapper history-wrapper">
+    <table class="history-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Waktu</th>
+
+                        <th>Barang</th>
+
+                        <th>Transaksi</th>
+
+                        <th>Qty</th>
+
+                        <th>Stok</th>
+
+                    </tr>
+
+                </thead>
 
 
-    <!-- =====================================================
-         BARANG DATANG
-    ====================================================== -->
+                <tbody id="historyTable">
 
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="empty"
+                        >
+                            Belum ada transaksi
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+    </table>
+
+        </div>
+
+  </section>
+    <section class="card">
+
+        <h2>
+            Form Barang Baru (Belum terdata)🆕
+        </h2>
+
+        <div class="cari">
+
+            <div>
+                <label for="namaBarang">
+                    Nama Barang
+                </label>
+                <input
+                    type="text"
+                    id="namaBarang"
+                    placeholder="Product..."
+                >
+
+            </div>
+            <div>
+
+                <label for="stokAwal">
+                    Jumlah
+                </label>
+
+                <input
+                    type="number"
+                    id="stokAwal"
+                    min="0"
+                    value="0"
+                >
+
+            </div>
+
+        </div>
+
+        <div class="button-row">
+
+            <button
+                type="button"
+                class="main-btn"
+                onclick="tambahBarang()"
+            >
+                + Tambah Barang
+            </button>
+        </div>
+
+    </section> 
+  
+
+
+    
     
 
 
@@ -236,7 +230,7 @@
 
     <section class="card">
 
-        <h2>Statistik</h2>
+        <h2>Statistik 📊</h2>
 
         <div class="stats">
 
@@ -281,69 +275,8 @@
         </div>
 
     </section>
-
-
-    <!-- =====================================================
-         RIWAYAT TRANSAKSI
-    ====================================================== -->
-
-    <section class="card">
-
-        <h2>
-            📜 Riwayat Transaksi
-        </h2>
-
-
-        <div class="table-wrapper">
-
-            <table class="history-table">
-
-                <thead>
-
-                    <tr>
-
-                        <th>Waktu</th>
-
-                        <th>Barang</th>
-
-                        <th>Transaksi</th>
-
-                        <th>Qty</th>
-
-                        <th>Stok</th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody id="historyTable">
-
-                    <tr>
-
-                        <td
-                            colspan="5"
-                            class="empty"
-                        >
-                            Belum ada transaksi
-                        </td>
-
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </section>
-
+    
 </main>
-
-
-<!-- =====================================================
-     MODAL TRANSAKSI
-====================================================== -->
 
 <div
     class="modal"
@@ -420,6 +353,7 @@
 
 
 <!-- JAVASCRIPT -->
+ <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="script.js"></script>
 
 </body>
