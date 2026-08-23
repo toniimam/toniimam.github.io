@@ -1629,7 +1629,9 @@ async function init() {
 
 
 init();
-                    async function exportExcel() {
+
+
+async function exportExcel() {
 
     if (typeof XLSX === "undefined") {
         alert("Library Excel belum dimuat.");
@@ -1637,53 +1639,74 @@ init();
     }
 
     const now = new Date();
+
     const tahun = now.getFullYear();
     const bulan = now.getMonth();
     const hariIni = now.getDate();
 
     const namaBulan = [
-        "Januari","Februari","Maret","April","Mei","Juni",
-        "Juli","Agustus","September","Oktober","November","Desember"
+        "Januari","Februari","Maret","April",
+        "Mei","Juni","Juli","Agustus",
+        "September","Oktober","November","Desember"
     ];
 
     const jumlahHari =
         new Date(tahun, bulan + 1, 0).getDate();
 
-    const dataExcel = [];
 
-    /* ================================
-       BARIS HEADER
-    ================================= */
+    /* =========================
+       HEADER
+    ========================= */
 
-    const header = [
+    const header = [];
+
+    header.push(
         `${namaBulan[bulan]}-${tahun}`
-    ];
+    );
 
-    for (let hari = 1; hari <= jumlahHari; hari++) {
-        header.push(`${hari}/${bulan + 1}`);
+    for (
+        let hari = 1;
+        hari <= jumlahHari;
+        hari++
+    ) {
+
+        header.push(
+            `${hari}/${bulan + 1}`
+        );
+
     }
 
-    dataExcel.push(header);
+
+    const dataExcel = [header];
 
 
-    /* ================================
+    /* =========================
        DATA BARANG
-    ================================= */
+    ========================= */
 
     dataBarang.forEach(function(barang) {
-
-        const row = [barang.nama];
 
         let stok =
             Number(barang.stok_awal) || 0;
 
+        const row = [
+            barang.nama
+        ];
 
-        for (let hari = 1; hari <= jumlahHari; hari++) {
 
-            /* Setelah hari ini kosong */
+        for (
+            let hari = 1;
+            hari <= jumlahHari;
+            hari++
+        ) {
+
+            /* Hari setelah hari ini */
             if (hari > hariIni) {
+
                 row.push("");
+
                 continue;
+
             }
 
 
@@ -1691,54 +1714,92 @@ init();
                 `${tahun}-${String(bulan + 1).padStart(2, "0")}-${String(hari).padStart(2, "0")}`;
 
 
-            /* Transaksi pada tanggal tersebut */
             const transaksiHari =
-                transactions.filter(function(transaction) {
+                transactions.filter(
+                    function(transaction) {
 
-                    return (
-                        Number(transaction.barang_id) ===
-                        Number(barang.id)
-                        &&
-                        transaction.tanggal === tanggal
-                    );
+                        return (
+                            Number(
+                                transaction.barang_id
+                            ) ===
+                            Number(barang.id)
 
-                });
+                            &&
+
+                            transaction.tanggal ===
+                            tanggal
+                        );
+
+                    }
+                );
 
 
             let perubahan = 0;
 
+            let adaTransaksi = false;
 
-            transaksiHari.forEach(function(transaction) {
+            let transaksiLaku = false;
 
-                const qty =
-                    Number(transaction.qty) || 0;
+            let transaksiMasuk = false;
 
 
-                if (transaction.type === "masuk") {
-                    perubahan += qty;
+            transaksiHari.forEach(
+                function(transaction) {
+
+                    const qty =
+                        Number(
+                            transaction.qty
+                        ) || 0;
+
+
+                    if (
+                        transaction.type ===
+                        "masuk"
+                    ) {
+
+                        perubahan += qty;
+
+                        transaksiMasuk =
+                            true;
+
+                        adaTransaksi =
+                            true;
+
+                    }
+
+
+                    if (
+                        transaction.type ===
+                        "laku"
+                    ) {
+
+                        perubahan -= qty;
+
+                        transaksiLaku =
+                            true;
+
+                        adaTransaksi =
+                            true;
+
+                    }
+
                 }
-
-                if (transaction.type === "laku") {
-                    perubahan -= qty;
-                }
-
-            });
+            );
 
 
-            /* =========================
-               JIKA ADA TRANSAKSI
-            ========================= */
+            if (adaTransaksi) {
 
-            if (transaksiHari.length > 0) {
-
-                row.push(perubahan);
+                row.push(
+                    perubahan
+                );
 
                 stok += perubahan;
 
             } else {
 
-                /* Tidak ada transaksi */
-                row.push(stok);
+                row.push(
+                    stok
+                );
 
             }
 
@@ -1750,12 +1811,14 @@ init();
     });
 
 
-    /* ================================
-       BUAT WORKBOOK
-    ================================= */
+    /* =========================
+       BUAT EXCEL
+    ========================= */
 
     const worksheet =
-        XLSX.utils.aoa_to_sheet(dataExcel);
+        XLSX.utils.aoa_to_sheet(
+            dataExcel
+        );
 
     const workbook =
         XLSX.utils.book_new();
@@ -1768,47 +1831,85 @@ init();
     );
 
 
-    /* ================================
-       MERGE A1 SAMPAI AKHIR BULAN
-    ================================= */
-
-    worksheet["!merges"] = [
-        {
-            s: { r: 0, c: 0 },
-            e: {
-                r: 0,
-                c: jumlahHari
-            }
-        }
-    ];
-
-
-    /* ================================
+    /* =========================
        LEBAR KOLOM
-    ================================= */
+    ========================= */
 
     const widths = [
         {
-            wch: 35
+            wch: 38
         }
     ];
 
-    for (let i = 0; i < jumlahHari; i++) {
+
+    for (
+        let i = 0;
+        i < jumlahHari;
+        i++
+    ) {
+
         widths.push({
             wch: 7
         });
+
     }
 
-    worksheet["!cols"] = widths;
+
+    worksheet["!cols"] =
+        widths;
 
 
-    /* ================================
-       STYLE CELL
-    ================================= */
+    /* =========================
+       STYLE HEADER
+    ========================= */
 
-    for (let r = 0; r < dataExcel.length; r++) {
+    for (
+        let c = 0;
+        c <= jumlahHari;
+        c++
+    ) {
 
-        for (let c = 0; c < dataExcel[r].length; c++) {
+        const cell =
+            worksheet[
+                XLSX.utils.encode_cell({
+                    r: 0,
+                    c: c
+                })
+            ];
+
+
+        if (!cell) continue;
+
+
+        cell.s = {
+            font: {
+                bold: true
+            },
+
+            alignment: {
+                horizontal: "center",
+                vertical: "center"
+            }
+        };
+
+    }
+
+
+    /* =========================
+       STYLE DATA
+    ========================= */
+
+    for (
+        let r = 1;
+        r < dataExcel.length;
+        r++
+    ) {
+
+        for (
+            let c = 1;
+            c <= jumlahHari;
+            c++
+        ) {
 
             const cellAddress =
                 XLSX.utils.encode_cell({
@@ -1816,140 +1917,138 @@ init();
                     c: c
                 });
 
+
             const cell =
                 worksheet[cellAddress];
+
 
             if (!cell) continue;
 
 
-            /* Header */
-            if (r === 0) {
+            cell.s = {
+                alignment: {
+                    horizontal: "center",
+                    vertical: "center"
+                }
+            };
 
-                cell.s = {
-                    font: {
-                        bold: true
-                    },
-                    alignment: {
-                        horizontal: "center",
-                        vertical: "center"
+
+            /* =====================
+               CEK TRANSAKSI
+            ===================== */
+
+            const barang =
+                dataBarang[r - 1];
+
+
+            const hari =
+                c;
+
+
+            const tanggal =
+                `${tahun}-${String(bulan + 1).padStart(2, "0")}-${String(hari).padStart(2, "0")}`;
+
+
+            const transaksiHari =
+                transactions.filter(
+                    function(transaction) {
+
+                        return (
+                            Number(
+                                transaction.barang_id
+                            ) ===
+                            Number(barang.id)
+
+                            &&
+
+                            transaction.tanggal ===
+                            tanggal
+                        );
+
                     }
-                };
-
-                continue;
-            }
+                );
 
 
-            /* Nama barang */
-            if (c === 0) {
+            const adaLaku =
+                transaksiHari.some(
+                    function(transaction) {
 
-                cell.s = {
-                    alignment: {
-                        vertical: "center"
+                        return (
+                            transaction.type ===
+                            "laku"
+                        );
+
                     }
-                };
-
-                continue;
-            }
+                );
 
 
-            const value =
-                Number(cell.v);
+            const adaMasuk =
+                transaksiHari.some(
+                    function(transaction) {
+
+                        return (
+                            transaction.type ===
+                            "masuk"
+                        );
+
+                    }
+                );
 
 
-            /* BARANG LAKU */
-            if (
-                Number.isFinite(value) &&
-                value < 0
-            ) {
+            /* MERAH = LAKU */
+
+            if (adaLaku) {
 
                 cell.s = {
+
                     font: {
+                        bold: true,
                         color: {
                             rgb: "FFFFFF"
-                        },
-                        bold: true
+                        }
                     },
+
                     fill: {
                         fgColor: {
                             rgb: "C00000"
                         }
                     },
+
                     alignment: {
                         horizontal: "center",
                         vertical: "center"
                     }
+
                 };
 
             }
 
 
-            /* BARANG MASUK */
-            else if (
-                Number.isFinite(value) &&
-                value > 0
-            ) {
+            /* HIJAU = MASUK */
 
-                /*
-                 * Hanya diberi hijau jika
-                 * nilai tersebut merupakan
-                 * transaksi masuk.
-                 */
+            else if (adaMasuk) {
 
-                const barang =
-                    dataBarang[r - 1];
+                cell.s = {
 
-                const tanggalIndex =
-                    c - 1;
-
-                const tanggal =
-                    `${tahun}-${String(bulan + 1).padStart(2, "0")}-${String(tanggalIndex + 1).padStart(2, "0")}`;
-
-                const adaMasuk =
-                    transactions.some(function(transaction) {
-
-                        return (
-                            Number(transaction.barang_id) ===
-                            Number(barang.id)
-                            &&
-                            transaction.tanggal ===
-                            tanggal
-                            &&
-                            transaction.type ===
-                            "masuk"
-                        );
-
-                    });
-
-                if (adaMasuk) {
-
-                    cell.s = {
-                        font: {
-                            color: {
-                                rgb: "006100"
-                            },
-                            bold: true
-                        },
-                        fill: {
-                            fgColor: {
-                                rgb: "C6EFCE"
-                            }
-                        },
-                        alignment: {
-                            horizontal: "center",
-                            vertical: "center"
+                    font: {
+                        bold: true,
+                        color: {
+                            rgb: "006100"
                         }
-                    };
+                    },
 
-                } else {
-
-                    cell.s = {
-                        alignment: {
-                            horizontal: "center",
-                            vertical: "center"
+                    fill: {
+                        fgColor: {
+                            rgb: "C6EFCE"
                         }
-                    };
+                    },
 
-                }
+                    alignment: {
+                        horizontal: "center",
+                        vertical: "center"
+                    }
+
+                };
 
             }
 
@@ -1958,15 +2057,19 @@ init();
     }
 
 
-    /* ================================
-       EXPORT
-    ================================= */
+    /* =========================
+       EXPORT XLSX
+    ========================= */
 
     const excelData =
-        XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array"
-        });
+        XLSX.write(
+            workbook,
+            {
+                bookType: "xlsx",
+                type: "array"
+            }
+        );
+
 
     const blob =
         new Blob(
@@ -1977,23 +2080,40 @@ init();
             }
         );
 
+
     const url =
-        URL.createObjectURL(blob);
+        URL.createObjectURL(
+            blob
+        );
+
 
     const link =
         document.createElement("a");
 
+
     link.href = url;
+
 
     link.download =
         `Rekap-Stok-${namaBulan[bulan]}-${tahun}.xlsx`;
 
-    document.body.appendChild(link);
+
+    document.body.appendChild(
+        link
+    );
+
 
     link.click();
 
-    document.body.removeChild(link);
 
-    URL.revokeObjectURL(url);
+    document.body.removeChild(
+        link
+    );
 
-        }
+
+    URL.revokeObjectURL(
+        url
+    );
+
+                   }
+
