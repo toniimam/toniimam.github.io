@@ -188,8 +188,10 @@ export default function App() {
   const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size
   const recentActivityCount = monthTransactions.length
   const brandMonthlySales = brands.map(brand => {
-    const brandProductIds = new Set(products.filter(product => product.brand === brand.nama).map(product => product.id))
-    const sold = monthTransactions.filter(tx => tx.type === 'laku' && brandProductIds.has(tx.barang_id)).reduce((sum, tx) => sum + Number(tx.qty || 0), 0)
+    const brandProducts = products.filter(product => product.brand === brand.nama)
+    const productPrices = new Map(brandProducts.map(product => [product.id, Math.max(0, Number(product.price) || 0)]))
+    const brandProductIds = new Set(brandProducts.map(product => product.id))
+    const sold = monthTransactions.filter(tx => tx.type === 'laku' && brandProductIds.has(tx.barang_id)).reduce((sum, tx) => sum + Number(tx.qty || 0) * (productPrices.get(tx.barang_id) || 0), 0)
     const target = Math.max(0, Number(targetDrafts[brand.id] ?? brand.target_bulanan) || 0)
     return { ...brand, sold, target, progress: target > 0 ? Math.min(100, sold / target * 100) : 0 }
   }).sort((a, b) => b.sold - a.sold)
@@ -230,11 +232,11 @@ export default function App() {
               <article className="metric-card"><div className="metric-top"><span>Perlu pengadaan</span><div className="metric-icon red"><Bell size={19} /></div></div><div className="metric-value">{(lowStock + outStock).toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className={outStock ? 'foot-danger' : 'foot-warning'}>{outStock.toLocaleString('id-ID')} habis, {lowStock.toLocaleString('id-ID')} menipis</span></div></article>
             </div>
             <article className="panel brand-target-panel">
-              <div className="panel-heading"><div><h2>Brand &amp; target bulanan</h2><p>Penjualan bulan ini dibanding target unit</p></div><span className="demo-pill">{brands.length} BRAND</span></div>
+              <div className="panel-heading"><div><h2>Brand &amp; target penjualan</h2><p>Realisasi omzet bulan ini dibanding target Rupiah</p></div><span className="demo-pill">{brands.length} BRAND</span></div><p className="brand-target-note">Omzet dihitung dari jumlah terjual × harga barang saat ini.</p>
               <div className="brand-target-grid">{brandMonthlySales.map(brand => <div className="brand-target-item" key={brand.id}>
-                <div className="brand-target-top"><b>{brand.nama}</b><span>{brand.sold.toLocaleString('id-ID')} / {brand.target.toLocaleString('id-ID')} unit</span></div>
+                <div className="brand-target-top"><b>{brand.nama}</b><span>{rupiah(brand.sold)} / {rupiah(brand.target)}</span></div>
                 <div className="brand-target-track"><div style={{ width: brand.progress + '%' }} /></div>
-                <div className="brand-target-bottom"><span>{brand.target > 0 ? Math.round(brand.sold / brand.target * 100) + '% tercapai' : 'Target belum diisi'}</span><div className="brand-target-edit"><input aria-label={'Target bulanan ' + brand.nama} type="number" min="0" value={targetDrafts[brand.id] ?? String(brand.target_bulanan || 0)} onChange={e => setTargetDrafts(current => ({ ...current, [brand.id]: e.target.value }))} /><button onClick={() => saveBrandTarget(brand)}>Simpan</button></div></div>
+                <div className="brand-target-bottom"><span>{brand.target > 0 ? Math.round(brand.sold / brand.target * 100) + '% tercapai' : 'Target belum diisi'}</span><div className="brand-target-edit"><input aria-label={'Target penjualan bulanan dalam Rupiah untuk ' + brand.nama} type="number" min="0" step="1000" value={targetDrafts[brand.id] ?? String(brand.target_bulanan || 0)} onChange={e => setTargetDrafts(current => ({ ...current, [brand.id]: e.target.value }))} /><button onClick={() => saveBrandTarget(brand)}>Simpan</button></div></div>
               </div>)}</div>
             </article>
             <div className="chart-grid dashboard-stats-grid">
