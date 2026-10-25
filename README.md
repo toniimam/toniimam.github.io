@@ -28,9 +28,9 @@ Aplikasi manajemen stok berbasis React, TypeScript, dan Vite, dipublikasikan mel
 
 1. **Dashboard dan target omzet per brand:** selesai dan ter-deploy.
 2. **Keamanan RPC serta pencatatan penjualan dan barang masuk:** implementasi dan build selesai. Uji alur nyata dengan akun admin masih diperlukan sebelum dinyatakan terverifikasi operasional.
-3. **Edit/hapus penjualan dari antarmuka:** masih perlu dihubungkan ke RPC atomik yang tersedia, lalu diuji agar stok rollback tetap konsisten.
+3. **Edit/hapus penjualan dari antarmuka:** tombol edit dan hapus sudah dihubungkan ke RPC atomik. Edit mempertahankan barang yang sama dan memperbarui ledger terkait, hapus menghapus catatan penjualan beserta transaksi stok terkait. Uji operasional tetap diperlukan dengan transaksi uji yang disetujui.
 4. **Laporan:** filter periode, ringkasan omzet lintas brand, dan ekspor laporan.
-5. **Penguatan keamanan lanjutan:** aktifkan perlindungan kata sandi bocor pada pengaturan Supabase Auth dan audit kebijakan percobaan login.
+5. **Penguatan keamanan lanjutan:** dilewati sesuai prioritas proyek, form login terautentikasi tetap dipertahankan.
 6. **Optimasi:** evaluasi indeks foreign key dan uji regresi stok, transaksi, serta akses admin/non-admin.
 
 ## Pengembangan
