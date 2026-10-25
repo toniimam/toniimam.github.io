@@ -3,7 +3,7 @@ import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, ChevronDown, Circle
 
 type Brand = { id: number; nama: string }
 type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
-type Tx = { barang_id: number; type: string; qty: number }
+type Tx = { barang_id: number; type: string; qty: number; tanggal?: string }
 
 const SUPABASE_URL = 'https://rbpxeuqszgxomrmjhaet.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_UDOUw4i_aFHLgVx3dYN2Fw_bCWUnVcV'
@@ -51,6 +51,7 @@ export default function App() {
   const [loginEmail, setLoginEmail] = useState('')
   const [password, setPassword] = useState('')
   const [products, setProducts] = useState<Product[]>([])
+  const [transactions, setTransactions] = useState<Tx[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
   const [activeNav, setActiveNav] = useState('Dashboard')
   const [query, setQuery] = useState('')
@@ -71,7 +72,7 @@ export default function App() {
       const [rawBarang, rawBrand, rawTx] = await Promise.all([
         apiAll('/rest/v1/barang?select=id,nama,stok_awal,brand_id,sku,kategori,harga&order=nama.asc', currentToken),
         apiAll('/rest/v1/brand?select=id,nama&order=nama.asc', currentToken),
-        apiAll('/rest/v1/transaksi?select=barang_id,type,qty', currentToken),
+        apiAll('/rest/v1/transaksi?select=barang_id,type,qty,tanggal', currentToken),
       ])
       const brandList: Brand[] = rawBrand || []
       const txList: Tx[] = rawTx || []
@@ -96,6 +97,7 @@ export default function App() {
       })
       setBrands(brandList)
       setProducts(result)
+      setTransactions(txList)
       setNotice(`Terhubung ke database StokFlow, ${result.length.toLocaleString('id-ID')} barang dimuat.`)
     } catch (e: any) {
       setNotice(`Gagal memuat data: ${e.message}`)
@@ -157,25 +159,21 @@ export default function App() {
   const lowStock = products.filter(p => p.stock > 0 && p.stock <= 10).length
   const outStock = products.filter(p => p.stock <= 0).length
 
-  const stockByBrand = useMemo(() => {
-    const totals = new Map<string, { items: number; stock: number }>()
-    products.forEach(p => {
-      const current = totals.get(p.brand) || { items: 0, stock: 0 }
-      current.items += 1
-      current.stock += p.stock
-      totals.set(p.brand, current)
-    })
-    return Array.from(totals.entries())
-      .map(([name, value]) => ({ name, ...value }))
-      .sort((a, b) => b.stock - a.stock)
-      .slice(0, 5)
-  }, [products])
-  const attentionProducts = useMemo(
-    () => products.filter(p => p.stock <= 10).sort((a, b) => a.stock - b.stock).slice(0, 6),
-    [products],
-  )
   const safeStock = products.filter(p => p.stock > 10).length
-  const maxBrandStock = Math.max(1, ...stockByBrand.map(b => b.stock))
+  const inventoryValue = products.reduce((sum, p) => sum + Math.max(0, p.stock) * Math.max(0, p.price), 0)
+  const now = new Date()
+  const monthTransactions = transactions.filter(t => t.tanggal && new Date(t.tanggal).getFullYear() === now.getFullYear() && new Date(t.tanggal).getMonth() === now.getMonth())
+  const soldThisMonth = monthTransactions.filter(t => t.type === 'laku').reduce((sum, t) => sum + Number(t.qty || 0), 0)
+  const incomingThisMonth = monthTransactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').reduce((sum, t) => sum + Number(t.qty || 0), 0)
+  const lastSevenDays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - index))
+    const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
+    const dayTx = transactions.filter(t => t.tanggal && new Date(t.tanggal).getFullYear() === date.getFullYear() && new Date(t.tanggal).getMonth() === date.getMonth() && new Date(t.tanggal).getDate() === date.getDate())
+    return { key, label: date.toLocaleDateString('id-ID', { weekday: 'short' }), sold: dayTx.filter(t => t.type === 'laku').reduce((sum, t) => sum + Number(t.qty || 0), 0), incoming: dayTx.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').reduce((sum, t) => sum + Number(t.qty || 0), 0) }
+  })
+  const trendMax = Math.max(1, ...lastSevenDays.flatMap(d => [d.sold, d.incoming]))
+  const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size
+  const recentActivityCount = monthTransactions.length
 
   if (!token) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 20, background: '#f5f6fb', fontFamily: 'Inter,system-ui,sans-serif' }}>
