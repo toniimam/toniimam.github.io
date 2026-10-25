@@ -46,7 +46,7 @@ export default function App() {
   }
   function exportCsv() {
     const rows = [['Nama Barang', 'SKU', 'Brand', 'Kategori', 'Stok', 'Harga'], ...products.map(p => [p.name, p.sku, p.brand, p.category, String(p.stock), String(p.price)])]
-    const csv = rows.map(row => row.map(v => '"' + v.replaceAll('"', '""') + '"').join(',')).join('\n')
+    const csv = rows.map(row => row.map(v => '"' + v.replace(/"/g, '""') + '"').join(',')).join('\n')
     const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' }))
     const a = document.createElement('a'); a.href = url; a.download = 'stokflow-barang.csv'; a.click(); URL.revokeObjectURL(url)
     setNotice('File CSV berhasil disiapkan dari data demo lokal.')
