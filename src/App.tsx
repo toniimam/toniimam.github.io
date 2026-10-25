@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, ChevronDown, CircleHelp, Download, LayoutDashboard, Menu, MoreHorizontal, Package, Plus, Search, Settings2, ShoppingCart, SlidersHorizontal, Sparkles, TrendingUp, Truck, X } from 'lucide-react'
 
 type Brand = { id: number; nama: string; target_bulanan: number }
-type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
-type Tx = { barang_id: number; type: string; qty: number; tanggal?: string }
-type Sale = { brand: string | null; qty: number | null; harga: number; tanggal_pembelian: string; barang_id: number | null }
+type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; openingStock: number; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
+type Tx = { id: number; barang_id: number; type: string; qty: number; tanggal?: string; penjualan_id?: number | null }
+type Sale = { id: number; brand: string | null; qty: number | null; harga: number; tanggal_pembelian: string; barang_id: number | null }
 
 const SUPABASE_URL = 'https://rbpxeuqszgxomrmjhaet.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_UDOUw4i_aFHLgVx3dYN2Fw_bCWUnVcV'
@@ -38,6 +38,7 @@ async function apiAll(path: string, currentToken = '') {
 }
 
 const rupiah = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
+const todayLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard },
   { label: 'Barang & Stok', icon: Boxes },
@@ -68,6 +69,14 @@ export default function App() {
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
+  const [saleProductId, setSaleProductId] = useState('')
+  const [saleQty, setSaleQty] = useState('1')
+  const [salePrice, setSalePrice] = useState('0')
+  const [saleDate, setSaleDate] = useState(todayLocal())
+  const [incomingProductId, setIncomingProductId] = useState('')
+  const [incomingQty, setIncomingQty] = useState('1')
+  const [incomingDate, setIncomingDate] = useState(todayLocal())
+  const [savingTransaction, setSavingTransaction] = useState(false)
 
   async function loadData(currentToken = token) {
     setLoading(true)
@@ -75,8 +84,8 @@ export default function App() {
       const [rawBarang, rawBrand, rawTx, rawSales] = await Promise.all([
         apiAll('/rest/v1/barang?select=id,nama,stok_awal,brand_id,sku,kategori,harga&order=nama.asc', currentToken),
         apiAll('/rest/v1/brand?select=id,nama,target_bulanan&order=nama.asc', currentToken),
-        apiAll('/rest/v1/transaksi?select=barang_id,type,qty,tanggal', currentToken),
-        apiAll('/rest/v1/penjualan?select=brand,qty,harga,tanggal_pembelian,barang_id&order=tanggal_pembelian.desc', currentToken),
+        apiAll('/rest/v1/transaksi?select=id,barang_id,type,qty,tanggal,penjualan_id&order=tanggal.desc', currentToken),
+        apiAll('/rest/v1/penjualan?select=id,brand,qty,harga,tanggal_pembelian,barang_id&order=tanggal_pembelian.desc', currentToken),
       ])
       const brandList: Brand[] = rawBrand || []
       const txList: Tx[] = rawTx || []
@@ -95,6 +104,7 @@ export default function App() {
           brand: brandList.find(x => x.id === b.brand_id)?.nama || 'Tanpa brand',
           category: b.kategori || 'Belum dikategorikan',
           stock,
+          openingStock: Number(b.stok_awal || 0),
           price: Number(b.harga || 0),
           status: stock === 0 ? 'Habis' : stock <= 10 ? 'Menipis' : 'Aman',
         }
@@ -102,7 +112,7 @@ export default function App() {
       setBrands(brandList)
       setProducts(result)
       setTransactions(txList)
-      setSales((rawSales || []).map((sale: any) => ({ ...sale, qty: Number(sale.qty || 0), harga: Number(sale.harga || 0) })))
+      setSales((rawSales || []).map((sale: any) => ({ ...sale, id: Number(sale.id), qty: Number(sale.qty || 0), harga: Number(sale.harga || 0), barang_id: sale.barang_id == null ? null : Number(sale.barang_id) })))
       setNotice(`Terhubung ke database StokFlow, ${result.length.toLocaleString('id-ID')} barang dimuat.`)
     } catch (e: any) {
       setNotice(`Gagal memuat data: ${e.message}`)
@@ -162,6 +172,61 @@ export default function App() {
       await loadData(token)
       setNotice('Barang berhasil disimpan ke Supabase.')
     } catch (e: any) { setNotice(`Gagal menyimpan barang: ${e.message}`) }
+  }
+
+  function stockAtDate(productId: number, date: string) {
+    const product = products.find(item => item.id === productId)
+    if (!product) return null
+    return product.openingStock + transactions.filter(t => t.barang_id === productId && t.tanggal && t.tanggal <= date).reduce((sum, t) => {
+      if (t.type === 'masuk' || t.type === 'adjust_masuk') return sum + Number(t.qty || 0)
+      if (t.type === 'laku' || t.type === 'adjust_keluar') return sum - Number(t.qty || 0)
+      if (t.type === 'adjust') return sum + Number(t.qty || 0)
+      return sum
+    }, 0)
+  }
+
+  async function addSale() {
+    const product = products.find(item => item.id === Number(saleProductId))
+    const qty = Number(saleQty)
+    const price = Number(salePrice)
+    if (!product) { setNotice('Pilih barang yang akan dijual.'); return }
+    if (!Number.isFinite(qty) || qty < 1) { setNotice('Jumlah penjualan minimal 1 unit.'); return }
+    if (!Number.isFinite(price) || price < 0) { setNotice('Harga jual tidak boleh negatif.'); return }
+    if (!saleDate) { setNotice('Tanggal penjualan wajib diisi.'); return }
+    setSavingTransaction(true)
+    try {
+      await api('/rest/v1/rpc/catat_penjualan_atomic', {
+        method: 'POST',
+        body: JSON.stringify({ p_barang_id: product.id, p_brand: product.brand || 'Tanpa brand', p_qty: qty, p_harga: price, p_tanggal_pembelian: saleDate })
+      }, token)
+      await loadData(token)
+      setSaleQty('1')
+      setNotice('Penjualan tersimpan. Catatan penjualan dan pergerakan stok dicatat dalam satu transaksi database.')
+    } catch (e: any) {
+      setNotice('Penjualan gagal disimpan: ' + e.message)
+    } finally { setSavingTransaction(false) }
+  }
+
+  async function addIncoming() {
+    const product = products.find(item => item.id === Number(incomingProductId))
+    const qty = Number(incomingQty)
+    if (!product) { setNotice('Pilih barang yang akan masuk.'); return }
+    if (!Number.isFinite(qty) || qty < 1) { setNotice('Jumlah barang masuk minimal 1 unit.'); return }
+    if (!incomingDate) { setNotice('Tanggal barang masuk wajib diisi.'); return }
+    const expectedStock = stockAtDate(product.id, incomingDate)
+    if (expectedStock === null) { setNotice('Stok barang tidak dapat dihitung. Muat ulang data.'); return }
+    setSavingTransaction(true)
+    try {
+      await api('/rest/v1/rpc/catat_transaksi_stok_atomic', {
+        method: 'POST',
+        body: JSON.stringify({ p_barang_id: product.id, p_tanggal: incomingDate, p_type: 'masuk', p_qty: qty, p_expected_stock: expectedStock })
+      }, token)
+      await loadData(token)
+      setIncomingQty('1')
+      setNotice('Barang masuk tersimpan dan stok diperbarui secara atomik.')
+    } catch (e: any) {
+      setNotice('Barang masuk gagal disimpan: ' + e.message)
+    } finally { setSavingTransaction(false) }
   }
 
   function logout() { localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail(''); setProducts([]) }
@@ -265,7 +330,50 @@ export default function App() {
             </div>
             <div className="dashboard-note"><Sparkles size={16}/><span>Ringkasan dari Supabase saat data dimuat. Halaman <b>Barang &amp; Stok</b> khusus untuk pencarian dan tabel barang.</span><button onClick={() => loadData()} disabled={loading}>{loading ? 'Memuat...' : 'Perbarui data'}</button></div>
           </section>}
-          {activeNav !== 'Dashboard' && <section className="panel inventory-panel"><div className="inventory-heading"><div><h2>Daftar barang</h2><p>{loading ? 'Memuat data dari Supabase...' : 'Data barang dari database StokFlow'}</p></div><button className="text-action" onClick={() => loadData()}>Muat ulang <ArrowUpRight size={15} /></button></div><div className="table-tools"><div className="search-field"><Search size={17} /><input placeholder="Cari nama barang, SKU, atau brand..." value={query} onChange={e => setQuery(e.target.value)} />{query && <button onClick={() => setQuery('')}><X size={15} /></button>}</div><button className="filter-button" onClick={() => setNotice('Filter lanjutan kita aktifkan pada tahap berikutnya.')}><SlidersHorizontal size={16} /> Filter</button></div><div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>KATEGORI</th><th>STOK</th><th>HARGA / UNIT</th><th>STATUS</th><th></th></tr></thead><tbody>{filtered.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td className="muted-cell">{p.category}</td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td className="price-cell">{p.price ? rupiah(p.price) : 'Belum diatur'}</td><td><span className={'status-badge ' + (p.status === 'Aman' ? 'status-safe' : p.status === 'Menipis' ? 'status-low' : 'status-out')}><i />{p.status}</span></td><td><button className="row-more"><MoreHorizontal size={18} /></button></td></tr>)}{filtered.length === 0 && <tr><td colSpan={7} className="empty-state">Tidak ada barang yang cocok.</td></tr>}</tbody></table></div><div className="table-footer"><span>Menampilkan <b>{filtered.length}</b> dari <b>{products.length}</b> barang</span><span>● Data live dari Supabase</span></div></section>}
+          {activeNav === 'Penjualan' && <section className="panel inventory-panel" style={{ padding: 20 }}>
+            <div className="inventory-heading"><div><h2>Catat penjualan</h2><p>Penjualan dan pengurangan stok tersimpan bersama dalam satu transaksi database.</p></div><span className="demo-pill">{sales.length.toLocaleString('id-ID')} DATA</span></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12, margin: '18px 0 24px' }}>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Barang
+                <select value={saleProductId} onChange={e => { const id = e.target.value; setSaleProductId(id); const item = products.find(p => p.id === Number(id)); if (item) setSalePrice(String(item.price)) }} style={{ minWidth: 0, padding: 11, border: '1px solid #dfe2eb', borderRadius: 9, background: '#fff' }}>
+                  <option value="">Pilih barang</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} · {p.brand}</option>)}
+                </select>
+              </label>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Jumlah (unit)
+                <input type="number" min="1" step="1" value={saleQty} onChange={e => setSaleQty(e.target.value)} />
+              </label>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Harga jual per unit (Rp)
+                <input type="number" min="0" step="100" value={salePrice} onChange={e => setSalePrice(e.target.value)} />
+              </label>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Tanggal penjualan
+                <input type="date" value={saleDate} max={todayLocal()} onChange={e => setSaleDate(e.target.value)} />
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'end', gap: 7 }}><span style={{ color: '#747b8d', fontSize: 12 }}>Total penjualan</span><b style={{ fontSize: 18 }}>{rupiah(Math.max(0, Number(saleQty) || 0) * Math.max(0, Number(salePrice) || 0))}</b><button className="button-primary" disabled={savingTransaction || loading} onClick={addSale}>{savingTransaction ? 'Menyimpan...' : 'Simpan penjualan'}</button></div>
+            </div>
+            <div className="inventory-heading"><div><h2>Riwayat penjualan</h2><p>20 catatan terbaru, harga menggunakan nilai transaksi tersimpan.</p></div><button className="text-action" onClick={() => loadData()} disabled={loading}>Muat ulang <ArrowUpRight size={15} /></button></div>
+            <div className="table-scroll"><table><thead><tr><th>TANGGAL</th><th>BARANG</th><th>BRAND</th><th>QTY</th><th>HARGA / UNIT</th><th>TOTAL</th></tr></thead><tbody>{[...sales].sort((a,b) => b.tanggal_pembelian.localeCompare(a.tanggal_pembelian) || b.id-a.id).slice(0,20).map(sale => <tr key={sale.id}><td>{new Date(sale.tanggal_pembelian + 'T00:00:00').toLocaleDateString('id-ID')}</td><td>{products.find(p => p.id === sale.barang_id)?.name || 'Barang tidak ditemukan'}</td><td>{sale.brand || 'Tanpa brand'}</td><td>{Number(sale.qty || 0).toLocaleString('id-ID')}</td><td>{rupiah(sale.harga)}</td><td className="price-cell">{rupiah(Number(sale.qty || 0) * sale.harga)}</td></tr>)}{sales.length === 0 && <tr><td colSpan={6} className="empty-state">Belum ada data penjualan.</td></tr>}</tbody></table></div>
+          </section>}
+
+          {activeNav === 'Barang Masuk' && <section className="panel inventory-panel" style={{ padding: 20 }}>
+            <div className="inventory-heading"><div><h2>Catat barang masuk</h2><p>Pergerakan stok divalidasi database sebelum disimpan.</p></div><span className="demo-pill">{transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').length.toLocaleString('id-ID')} DATA</span></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 12, margin: '18px 0 24px' }}>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Barang
+                <select value={incomingProductId} onChange={e => setIncomingProductId(e.target.value)} style={{ minWidth: 0, padding: 11, border: '1px solid #dfe2eb', borderRadius: 9, background: '#fff' }}>
+                  <option value="">Pilih barang</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} · stok {p.stock}</option>)}
+                </select>
+              </label>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Jumlah masuk (unit)
+                <input type="number" min="1" step="1" value={incomingQty} onChange={e => setIncomingQty(e.target.value)} />
+              </label>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Tanggal barang masuk
+                <input type="date" value={incomingDate} max={todayLocal()} onChange={e => setIncomingDate(e.target.value)} />
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'end', gap: 7 }}><span style={{ color: '#747b8d', fontSize: 12 }}>Stok barang pada tanggal tersebut</span><b style={{ fontSize: 18 }}>{incomingProductId && stockAtDate(Number(incomingProductId), incomingDate) !== null ? Number(stockAtDate(Number(incomingProductId), incomingDate)).toLocaleString('id-ID') + ' unit' : 'Pilih barang'}</b><button className="button-primary" disabled={savingTransaction || loading} onClick={addIncoming}>{savingTransaction ? 'Menyimpan...' : 'Simpan barang masuk'}</button></div>
+            </div>
+            <div className="inventory-heading"><div><h2>Riwayat barang masuk</h2><p>20 catatan terbaru dari buku transaksi stok.</p></div><button className="text-action" onClick={() => loadData()} disabled={loading}>Muat ulang <ArrowUpRight size={15} /></button></div>
+            <div className="table-scroll"><table><thead><tr><th>TANGGAL</th><th>BARANG</th><th>JUMLAH MASUK</th><th>STOK SAAT INI</th></tr></thead><tbody>{transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').sort((a,b) => (b.tanggal || '').localeCompare(a.tanggal || '') || b.id-a.id).slice(0,20).map(tx => <tr key={tx.id}><td>{tx.tanggal ? new Date(tx.tanggal + 'T00:00:00').toLocaleDateString('id-ID') : '-'}</td><td>{products.find(p => p.id === tx.barang_id)?.name || 'Barang tidak ditemukan'}</td><td>{Number(tx.qty || 0).toLocaleString('id-ID')} unit</td><td>{(products.find(p => p.id === tx.barang_id)?.stock ?? 0).toLocaleString('id-ID')} unit</td></tr>)}{transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').length === 0 && <tr><td colSpan={4} className="empty-state">Belum ada data barang masuk.</td></tr>}</tbody></table></div>
+          </section>}
+
+          {(activeNav === 'Barang & Stok' || activeNav === 'Laporan') && <section className="panel inventory-panel"><div className="inventory-heading"><div><h2>Daftar barang</h2><p>{loading ? 'Memuat data dari Supabase...' : 'Data barang dari database StokFlow'}</p></div><button className="text-action" onClick={() => loadData()}>Muat ulang <ArrowUpRight size={15} /></button></div><div className="table-tools"><div className="search-field"><Search size={17} /><input placeholder="Cari nama barang, SKU, atau brand..." value={query} onChange={e => setQuery(e.target.value)} />{query && <button onClick={() => setQuery('')}><X size={15} /></button>}</div><button className="filter-button" onClick={() => setNotice('Filter lanjutan kita aktifkan pada tahap berikutnya.')}><SlidersHorizontal size={16} /> Filter</button></div><div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>KATEGORI</th><th>STOK</th><th>HARGA / UNIT</th><th>STATUS</th><th></th></tr></thead><tbody>{filtered.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td className="muted-cell">{p.category}</td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td className="price-cell">{p.price ? rupiah(p.price) : 'Belum diatur'}</td><td><span className={'status-badge ' + (p.status === 'Aman' ? 'status-safe' : p.status === 'Menipis' ? 'status-low' : 'status-out')}><i />{p.status}</span></td><td><button className="row-more"><MoreHorizontal size={18} /></button></td></tr>)}{filtered.length === 0 && <tr><td colSpan={7} className="empty-state">Tidak ada barang yang cocok.</td></tr>}</tbody></table></div><div className="table-footer"><span>Menampilkan <b>{filtered.length}</b> dari <b>{products.length}</b> barang</span><span>● Data live dari Supabase</span></div></section>}
           <footer className="page-footer"><span>© 2026 StokFlow <span>·</span> Inventory made clearer.</span><span><i /> Database aktif</span></footer>
         </div>
       </main>
