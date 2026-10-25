@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, ChevronDown, CircleHelp, Download, LayoutDashboard, Menu, MoreHorizontal, Package, Plus, Search, Settings2, ShoppingCart, SlidersHorizontal, Sparkles, TrendingUp, Truck, X } from 'lucide-react'
+import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, ChevronDown, CircleHelp, Download, LayoutDashboard, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings2, ShoppingCart, SlidersHorizontal, Sparkles, Trash2, TrendingUp, Truck, X } from 'lucide-react'
 
 type Brand = { id: number; nama: string; target_bulanan: number }
 type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; openingStock: number; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
@@ -77,6 +77,11 @@ export default function App() {
   const [incomingQty, setIncomingQty] = useState('1')
   const [incomingDate, setIncomingDate] = useState(todayLocal())
   const [savingTransaction, setSavingTransaction] = useState(false)
+  const [editingSaleId, setEditingSaleId] = useState<number | null>(null)
+  const [editSaleQty, setEditSaleQty] = useState('1')
+  const [editSalePrice, setEditSalePrice] = useState('0')
+  const [editSaleBrand, setEditSaleBrand] = useState('')
+  const [editSaleDate, setEditSaleDate] = useState(todayLocal())
 
   async function loadData(currentToken = token) {
     setLoading(true)
@@ -204,6 +209,55 @@ export default function App() {
       setNotice('Penjualan tersimpan. Catatan penjualan dan pergerakan stok dicatat dalam satu transaksi database.')
     } catch (e: any) {
       setNotice('Penjualan gagal disimpan: ' + e.message)
+    } finally { setSavingTransaction(false) }
+  }
+
+  function beginEditSale(sale: Sale) {
+    setEditingSaleId(sale.id)
+    setEditSaleQty(String(sale.qty || 1))
+    setEditSalePrice(String(sale.harga || 0))
+    setEditSaleBrand(sale.brand || 'Tanpa brand')
+    setEditSaleDate(sale.tanggal_pembelian)
+    setNotice('')
+  }
+
+  async function saveEditedSale() {
+    const sale = sales.find(item => item.id === editingSaleId)
+    const qty = Number(editSaleQty)
+    const price = Number(editSalePrice)
+    if (!sale) { setNotice('Data penjualan yang akan diedit tidak ditemukan. Muat ulang data.'); return }
+    if (!Number.isInteger(qty) || qty < 1) { setNotice('Jumlah penjualan minimal 1 unit dan harus bilangan bulat.'); return }
+    if (!Number.isFinite(price) || price < 0) { setNotice('Harga jual tidak boleh negatif.'); return }
+    if (!editSaleBrand.trim()) { setNotice('Brand wajib diisi.'); return }
+    if (!editSaleDate || editSaleDate > todayLocal()) { setNotice('Tanggal penjualan tidak valid.'); return }
+    setSavingTransaction(true)
+    try {
+      await api('/rest/v1/rpc/edit_penjualan_atomic', {
+        method: 'POST',
+        body: JSON.stringify({ p_penjualan_id: sale.id, p_qty: qty, p_harga: price, p_brand: editSaleBrand.trim(), p_tanggal: editSaleDate })
+      }, token)
+      setEditingSaleId(null)
+      await loadData(token)
+      setNotice('Penjualan berhasil diperbarui. Catatan stok terkait diperbarui dalam transaksi database yang sama.')
+    } catch (e: any) {
+      setNotice('Edit penjualan gagal: ' + e.message)
+    } finally { setSavingTransaction(false) }
+  }
+
+  async function deleteSale(sale: Sale) {
+    const productName = products.find(p => p.id === sale.barang_id)?.name || 'barang'
+    if (!window.confirm('Hapus penjualan ' + productName + ' tanggal ' + sale.tanggal_pembelian + '? Catatan stok terkait juga akan dihapus.')) return
+    setSavingTransaction(true)
+    try {
+      await api('/rest/v1/rpc/hapus_penjualan_atomic', {
+        method: 'POST',
+        body: JSON.stringify({ p_penjualan_id: sale.id })
+      }, token)
+      if (editingSaleId === sale.id) setEditingSaleId(null)
+      await loadData(token)
+      setNotice('Penjualan dihapus dan catatan pengurangan stok terkait dibatalkan secara atomik.')
+    } catch (e: any) {
+      setNotice('Hapus penjualan gagal: ' + e.message)
     } finally { setSavingTransaction(false) }
   }
 
@@ -349,8 +403,18 @@ export default function App() {
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'end', gap: 7 }}><span style={{ color: '#747b8d', fontSize: 12 }}>Total penjualan</span><b style={{ fontSize: 18 }}>{rupiah(Math.max(0, Number(saleQty) || 0) * Math.max(0, Number(salePrice) || 0))}</b><button className="button-primary" disabled={savingTransaction || loading} onClick={addSale}>{savingTransaction ? 'Menyimpan...' : 'Simpan penjualan'}</button></div>
             </div>
+            {editingSaleId !== null && <div className="panel" style={{ padding: 16, margin: '8px 0 20px', border: '1px solid #dfe2eb' }}>
+              <div className="inventory-heading"><div><h2>Edit penjualan #{editingSaleId}</h2><p>Barang tetap, perubahan jumlah dan tanggal akan memperbarui transaksi stok terkait.</p></div><button className="text-action" onClick={() => setEditingSaleId(null)} disabled={savingTransaction}>Batal <X size={15} /></button></div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginTop: 12 }}>
+                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Brand<input value={editSaleBrand} onChange={e => setEditSaleBrand(e.target.value)} maxLength={120} /></label>
+                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Jumlah (unit)<input type="number" min="1" step="1" value={editSaleQty} onChange={e => setEditSaleQty(e.target.value)} /></label>
+                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Harga / unit (Rp)<input type="number" min="0" step="100" value={editSalePrice} onChange={e => setEditSalePrice(e.target.value)} /></label>
+                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Tanggal<input type="date" value={editSaleDate} max={todayLocal()} onChange={e => setEditSaleDate(e.target.value)} /></label>
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'end', gap: 7 }}><b style={{ fontSize: 16 }}>{rupiah(Math.max(0, Number(editSaleQty) || 0) * Math.max(0, Number(editSalePrice) || 0))}</b><button className="button-primary" disabled={savingTransaction || loading} onClick={saveEditedSale}>{savingTransaction ? 'Menyimpan...' : 'Simpan perubahan'}</button></div>
+              </div>
+            </div>}
             <div className="inventory-heading"><div><h2>Riwayat penjualan</h2><p>20 catatan terbaru, harga menggunakan nilai transaksi tersimpan.</p></div><button className="text-action" onClick={() => loadData()} disabled={loading}>Muat ulang <ArrowUpRight size={15} /></button></div>
-            <div className="table-scroll"><table><thead><tr><th>TANGGAL</th><th>BARANG</th><th>BRAND</th><th>QTY</th><th>HARGA / UNIT</th><th>TOTAL</th></tr></thead><tbody>{[...sales].sort((a,b) => b.tanggal_pembelian.localeCompare(a.tanggal_pembelian) || b.id-a.id).slice(0,20).map(sale => <tr key={sale.id}><td>{new Date(sale.tanggal_pembelian + 'T00:00:00').toLocaleDateString('id-ID')}</td><td>{products.find(p => p.id === sale.barang_id)?.name || 'Barang tidak ditemukan'}</td><td>{sale.brand || 'Tanpa brand'}</td><td>{Number(sale.qty || 0).toLocaleString('id-ID')}</td><td>{rupiah(sale.harga)}</td><td className="price-cell">{rupiah(Number(sale.qty || 0) * sale.harga)}</td></tr>)}{sales.length === 0 && <tr><td colSpan={6} className="empty-state">Belum ada data penjualan.</td></tr>}</tbody></table></div>
+            <div className="table-scroll"><table><thead><tr><th>TANGGAL</th><th>BARANG</th><th>BRAND</th><th>QTY</th><th>HARGA / UNIT</th><th>TOTAL</th><th>AKSI</th></tr></thead><tbody>{[...sales].sort((a,b) => b.tanggal_pembelian.localeCompare(a.tanggal_pembelian) || b.id-a.id).slice(0,20).map(sale => <tr key={sale.id}><td>{new Date(sale.tanggal_pembelian + 'T00:00:00').toLocaleDateString('id-ID')}</td><td>{products.find(p => p.id === sale.barang_id)?.name || 'Barang tidak ditemukan'}</td><td>{sale.brand || 'Tanpa brand'}</td><td>{Number(sale.qty || 0).toLocaleString('id-ID')}</td><td>{rupiah(sale.harga)}</td><td className="price-cell">{rupiah(Number(sale.qty || 0) * sale.harga)}</td><td><div style={{ display: 'flex', gap: 6 }}><button className="text-action" title="Edit penjualan" disabled={savingTransaction} onClick={() => beginEditSale(sale)}><Pencil size={15} /></button><button className="text-action" title="Hapus penjualan" disabled={savingTransaction} onClick={() => deleteSale(sale)} style={{ color: '#c43d4b' }}><Trash2 size={15} /></button></div></td></tr>)}{sales.length === 0 && <tr><td colSpan={7} className="empty-state">Belum ada data penjualan.</td></tr>}</tbody></table></div>
           </section>}
 
           {activeNav === 'Barang Masuk' && <section className="panel inventory-panel" style={{ padding: 20 }}>
