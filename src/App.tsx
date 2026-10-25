@@ -6,7 +6,7 @@ type Product = { id: number; name: string; sku: string; brand: string; category:
 type Tx = { barang_id: number; type: string; qty: number }
 
 const SUPABASE_URL = 'https://rbpxeuqszgxomrmjhaet.supabase.co'
-const SUPABASE_KEY = 'sb_publishable_UDOUw4i_aFHLgVx3dYN2Fw_bCWUnVc'
+const SUPABASE_KEY = 'sb_publishable_UDOUw4i_aFHLgVx3dYN2Fw_bCWUnVcV'
 
 async function api(path: string, options: RequestInit = {}, token = '') {
   const res = await fetch(`${SUPABASE_URL}${path}`, {
