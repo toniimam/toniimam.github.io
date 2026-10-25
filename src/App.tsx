@@ -125,6 +125,7 @@ export default function App() {
         const created = await api('/rest/v1/brand', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ nama: brandName, aktif: true }) }, token)
         brand = created[0]
       }
+      if (!brand) throw new Error('Brand gagal dibuat atau tidak dikembalikan oleh database.')
       const sku = `STK-${Date.now()}`
       await api('/rest/v1/barang', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ nama: newName.trim(), stok_awal: Math.max(0, Number(newStock) || 0), brand_id: brand.id, sku, kategori: newCategory.trim() || 'Belum dikategorikan', harga: Math.max(0, Number(newPrice) || 0) }) }, token)
       setShowAdd(false); setNewName(''); setNewBrand(''); setNewStock('0'); setNewCategory('Belum dikategorikan'); setNewPrice('0')
