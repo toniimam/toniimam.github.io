@@ -4,6 +4,7 @@ import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, ChevronDown, Circle
 type Brand = { id: number; nama: string; target_bulanan: number }
 type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
 type Tx = { barang_id: number; type: string; qty: number; tanggal?: string }
+type Sale = { brand: string | null; qty: number | null; harga: number; tanggal_pembelian: string; barang_id: number | null }
 
 const SUPABASE_URL = 'https://rbpxeuqszgxomrmjhaet.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_UDOUw4i_aFHLgVx3dYN2Fw_bCWUnVcV'
@@ -52,6 +53,7 @@ export default function App() {
   const [password, setPassword] = useState('')
   const [products, setProducts] = useState<Product[]>([])
   const [transactions, setTransactions] = useState<Tx[]>([])
+  const [sales, setSales] = useState<Sale[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
   const [targetDrafts, setTargetDrafts] = useState<Record<number, string>>({})
   const [activeNav, setActiveNav] = useState('Dashboard')
@@ -70,10 +72,11 @@ export default function App() {
   async function loadData(currentToken = token) {
     setLoading(true)
     try {
-      const [rawBarang, rawBrand, rawTx] = await Promise.all([
+      const [rawBarang, rawBrand, rawTx, rawSales] = await Promise.all([
         apiAll('/rest/v1/barang?select=id,nama,stok_awal,brand_id,sku,kategori,harga&order=nama.asc', currentToken),
         apiAll('/rest/v1/brand?select=id,nama,target_bulanan&order=nama.asc', currentToken),
         apiAll('/rest/v1/transaksi?select=barang_id,type,qty,tanggal', currentToken),
+        apiAll('/rest/v1/penjualan?select=brand,qty,harga,tanggal_pembelian,barang_id&order=tanggal_pembelian.desc', currentToken),
       ])
       const brandList: Brand[] = rawBrand || []
       const txList: Tx[] = rawTx || []
@@ -99,6 +102,7 @@ export default function App() {
       setBrands(brandList)
       setProducts(result)
       setTransactions(txList)
+      setSales((rawSales || []).map((sale: any) => ({ ...sale, qty: Number(sale.qty || 0), harga: Number(sale.harga || 0) })))
       setNotice(`Terhubung ke database StokFlow, ${result.length.toLocaleString('id-ID')} barang dimuat.`)
     } catch (e: any) {
       setNotice(`Gagal memuat data: ${e.message}`)
@@ -187,11 +191,13 @@ export default function App() {
   const trendMax = Math.max(1, ...lastSevenDays.flatMap(d => [d.sold, d.incoming]))
   const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size
   const recentActivityCount = monthTransactions.length
+  const monthSales = sales.filter(sale => {
+    if (!sale.tanggal_pembelian) return false
+    const date = new Date(sale.tanggal_pembelian + 'T00:00:00')
+    return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()
+  })
   const brandMonthlySales = brands.map(brand => {
-    const brandProducts = products.filter(product => product.brand === brand.nama)
-    const productPrices = new Map(brandProducts.map(product => [product.id, Math.max(0, Number(product.price) || 0)]))
-    const brandProductIds = new Set(brandProducts.map(product => product.id))
-    const sold = monthTransactions.filter(tx => tx.type === 'laku' && brandProductIds.has(tx.barang_id)).reduce((sum, tx) => sum + Number(tx.qty || 0) * (productPrices.get(tx.barang_id) || 0), 0)
+    const sold = monthSales.filter(sale => (sale.brand || '').trim().toLowerCase() === brand.nama.trim().toLowerCase()).reduce((sum, sale) => sum + Number(sale.qty || 0) * Number(sale.harga || 0), 0)
     const target = Math.max(0, Number(targetDrafts[brand.id] ?? brand.target_bulanan) || 0)
     return { ...brand, sold, target, progress: target > 0 ? Math.min(100, sold / target * 100) : 0 }
   }).sort((a, b) => b.sold - a.sold)
