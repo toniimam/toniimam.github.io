@@ -303,6 +303,9 @@ export default function App() {
   const visibleProducts = filtered.slice((inventoryPage - 1) * pageSize, inventoryPage * pageSize)
   const visibleSales = sortedSales.slice((salesPage - 1) * pageSize, salesPage * pageSize)
   const visibleIncoming = incomingTransactions.slice((incomingPage - 1) * pageSize, incomingPage * pageSize)
+  useEffect(() => { if (inventoryPage > inventoryPageCount) setInventoryPage(inventoryPageCount) }, [inventoryPage, inventoryPageCount])
+  useEffect(() => { if (salesPage > salesPageCount) setSalesPage(salesPageCount) }, [salesPage, salesPageCount])
+  useEffect(() => { if (incomingPage > incomingPageCount) setIncomingPage(incomingPageCount) }, [incomingPage, incomingPageCount])
   function pagination(label: string, total: number, page: number, pages: number, changePage: (page: number) => void) {
     const first = total === 0 ? 0 : (page - 1) * pageSize + 1
     const last = Math.min(page * pageSize, total)
