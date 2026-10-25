@@ -39,6 +39,7 @@ async function apiAll(path: string, currentToken = '') {
 
 const rupiah = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
 const todayLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+const firstDayOfMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` }
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard },
   { label: 'Barang & Stok', icon: Boxes },
@@ -80,6 +81,10 @@ export default function App() {
   const [inventoryPage, setInventoryPage] = useState(1)
   const [salesPage, setSalesPage] = useState(1)
   const [incomingPage, setIncomingPage] = useState(1)
+  const [reportStartDate, setReportStartDate] = useState(firstDayOfMonth())
+  const [reportEndDate, setReportEndDate] = useState(todayLocal())
+  const [reportBrand, setReportBrand] = useState('all')
+  const [reportPage, setReportPage] = useState(1)
   const [editingSaleId, setEditingSaleId] = useState<number | null>(null)
   const [editSaleQty, setEditSaleQty] = useState('1')
   const [editSalePrice, setEditSalePrice] = useState('0')
@@ -132,7 +137,7 @@ export default function App() {
       await api(`/rest/v1/app_admins?select=email&limit=1`, {}, currentToken)
       setToken(currentToken); setEmail(currentEmail); await loadData(currentToken)
     } catch {
-      localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail('')
+      localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail(''); clearAppData()
     }
   }
 
@@ -286,7 +291,12 @@ export default function App() {
     } finally { setSavingTransaction(false) }
   }
 
-  function logout() { localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail(''); setProducts([]) }
+  function clearAppData() {
+    setProducts([]); setTransactions([]); setSales([]); setBrands([]); setTargetDrafts({})
+    setEditingSaleId(null); setInventoryPage(1); setSalesPage(1); setIncomingPage(1); setReportPage(1)
+  }
+
+  function logout() { localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail(''); clearAppData() }
   function exportCsv() {
     const rows = [['Nama Barang', 'SKU', 'Brand', 'Kategori', 'Stok', 'Harga'], ...products.map(p => [p.name, p.sku, p.brand, p.category, String(p.stock), String(p.price)])]
     const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -300,12 +310,30 @@ export default function App() {
   const inventoryPageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const salesPageCount = Math.max(1, Math.ceil(sortedSales.length / pageSize))
   const incomingPageCount = Math.max(1, Math.ceil(incomingTransactions.length / pageSize))
+  const reportSales = useMemo(() => sortedSales.filter(sale => (!reportStartDate || sale.tanggal_pembelian >= reportStartDate) && (!reportEndDate || sale.tanggal_pembelian <= reportEndDate) && (reportBrand === 'all' || (sale.brand || 'Tanpa brand') === reportBrand)), [sortedSales, reportStartDate, reportEndDate, reportBrand])
+  const reportByBrand = useMemo(() => {
+    const totals = new Map<string, { brand: string; transactions: number; qty: number; revenue: number }>()
+    for (const sale of reportSales) {
+      const brand = sale.brand || 'Tanpa brand'
+      const row = totals.get(brand) || { brand, transactions: 0, qty: 0, revenue: 0 }
+      row.transactions += 1
+      row.qty += Number(sale.qty || 0)
+      row.revenue += Number(sale.qty || 0) * Number(sale.harga || 0)
+      totals.set(brand, row)
+    }
+    return [...totals.values()].sort((a, b) => b.revenue - a.revenue)
+  }, [reportSales])
+  const reportRevenue = reportSales.reduce((sum, sale) => sum + Number(sale.qty || 0) * Number(sale.harga || 0), 0)
+  const reportQty = reportSales.reduce((sum, sale) => sum + Number(sale.qty || 0), 0)
+  const reportPageCount = Math.max(1, Math.ceil(reportSales.length / pageSize))
+  const visibleReportSales = reportSales.slice((reportPage - 1) * pageSize, reportPage * pageSize)
   const visibleProducts = filtered.slice((inventoryPage - 1) * pageSize, inventoryPage * pageSize)
   const visibleSales = sortedSales.slice((salesPage - 1) * pageSize, salesPage * pageSize)
   const visibleIncoming = incomingTransactions.slice((incomingPage - 1) * pageSize, incomingPage * pageSize)
   useEffect(() => { if (inventoryPage > inventoryPageCount) setInventoryPage(inventoryPageCount) }, [inventoryPage, inventoryPageCount])
   useEffect(() => { if (salesPage > salesPageCount) setSalesPage(salesPageCount) }, [salesPage, salesPageCount])
   useEffect(() => { if (incomingPage > incomingPageCount) setIncomingPage(incomingPageCount) }, [incomingPage, incomingPageCount])
+  useEffect(() => { if (reportPage > reportPageCount) setReportPage(reportPageCount) }, [reportPage, reportPageCount])
   function pagination(label: string, total: number, page: number, pages: number, changePage: (page: number) => void) {
     const first = total === 0 ? 0 : (page - 1) * pageSize + 1
     const last = Math.min(page * pageSize, total)
@@ -318,6 +346,25 @@ export default function App() {
       </div>
     </div>
   }
+  function exportReportCsv() {
+    const rows: (string | number)[][] = [
+      ['Laporan Penjualan StokFlow'],
+      ['Periode', reportStartDate || 'Semua tanggal', reportEndDate || 'Semua tanggal'],
+      ['Filter brand', reportBrand === 'all' ? 'Semua brand' : reportBrand],
+      [],
+      ['Ringkasan per brand'],
+      ['Brand', 'Jumlah transaksi', 'Qty terjual', 'Omzet (Rp)'],
+      ...reportByBrand.map(row => [row.brand, row.transactions, row.qty, row.revenue]),
+      [],
+      ['Detail penjualan'],
+      ['Tanggal', 'Barang', 'Brand', 'Qty', 'Harga per unit (Rp)', 'Total (Rp)'],
+      ...reportSales.map(sale => [sale.tanggal_pembelian, products.find(p => p.id === sale.barang_id)?.name || 'Barang tidak ditemukan', sale.brand || 'Tanpa brand', Number(sale.qty || 0), Number(sale.harga || 0), Number(sale.qty || 0) * Number(sale.harga || 0)]),
+    ]
+    const csv = rows.map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join(String.fromCharCode(10))
+    const url = URL.createObjectURL(new Blob([String.fromCharCode(0xfeff) + csv], { type: 'text/csv;charset=utf-8;' }))
+    const a = document.createElement('a'); a.href = url; a.download = 'stokflow-laporan-penjualan.csv'; a.click(); URL.revokeObjectURL(url)
+  }
+
   const totalStock = products.reduce((s, p) => s + p.stock, 0)
   const lowStock = products.filter(p => p.stock > 0 && p.stock <= 10).length
   const outStock = products.filter(p => p.stock <= 0).length
@@ -464,7 +511,25 @@ export default function App() {
             <div className="table-scroll"><table><thead><tr><th>TANGGAL</th><th>BARANG</th><th>JUMLAH MASUK</th><th>STOK SAAT INI</th></tr></thead><tbody>{visibleIncoming.map(tx => <tr key={tx.id}><td>{tx.tanggal ? new Date(tx.tanggal + 'T00:00:00').toLocaleDateString('id-ID') : '-'}</td><td>{products.find(p => p.id === tx.barang_id)?.name || 'Barang tidak ditemukan'}</td><td>{Number(tx.qty || 0).toLocaleString('id-ID')} unit</td><td>{(products.find(p => p.id === tx.barang_id)?.stock ?? 0).toLocaleString('id-ID')} unit</td></tr>)}{transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').length === 0 && <tr><td colSpan={4} className="empty-state">Belum ada data barang masuk.</td></tr>}</tbody></table></div>{pagination('barang masuk', incomingTransactions.length, incomingPage, incomingPageCount, setIncomingPage)}
           </section>}
 
-          {(activeNav === 'Barang & Stok' || activeNav === 'Laporan') && <section className="panel inventory-panel"><div className="inventory-heading"><div><h2>Daftar barang</h2><p>{loading ? 'Memuat data dari Supabase...' : 'Data barang dari database StokFlow'}</p></div><button className="text-action" onClick={() => loadData()}>Muat ulang <ArrowUpRight size={15} /></button></div><div className="table-tools"><div className="search-field"><Search size={17} /><input placeholder="Cari nama barang, SKU, atau brand..." value={query} onChange={e => { setQuery(e.target.value); setInventoryPage(1) }} />{query && <button onClick={() => setQuery('')}><X size={15} /></button>}</div><button className="filter-button" onClick={() => setNotice('Filter lanjutan kita aktifkan pada tahap berikutnya.')}><SlidersHorizontal size={16} /> Filter</button></div><div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>KATEGORI</th><th>STOK</th><th>HARGA / UNIT</th><th>STATUS</th><th></th></tr></thead><tbody>{visibleProducts.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td className="muted-cell">{p.category}</td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td className="price-cell">{p.price ? rupiah(p.price) : 'Belum diatur'}</td><td><span className={'status-badge ' + (p.status === 'Aman' ? 'status-safe' : p.status === 'Menipis' ? 'status-low' : 'status-out')}><i />{p.status}</span></td><td><button className="row-more"><MoreHorizontal size={18} /></button></td></tr>)}{filtered.length === 0 && <tr><td colSpan={7} className="empty-state">Tidak ada barang yang cocok.</td></tr>}</tbody></table></div>{pagination('barang', filtered.length, inventoryPage, inventoryPageCount, setInventoryPage)}<div className="table-footer"><span>Hasil pencarian: <b>{filtered.length}</b> dari <b>{products.length}</b> barang</span><span>● Data live dari Supabase</span></div></section>}
+          {activeNav === 'Laporan' && <section className="panel inventory-panel" style={{ padding: 20 }}>
+            <div className="inventory-heading"><div><h2>Laporan penjualan</h2><p>Ringkasan omzet lintas brand berdasarkan harga yang tersimpan pada transaksi.</p></div><button className="button-primary" onClick={exportReportCsv}><Download size={16} /> Ekspor laporan CSV</button></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 12, margin: '18px 0' }}>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Dari tanggal<input type="date" value={reportStartDate} max={reportEndDate || undefined} onChange={e => { setReportStartDate(e.target.value); setReportPage(1) }} /></label>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Sampai tanggal<input type="date" value={reportEndDate} min={reportStartDate || undefined} max={todayLocal()} onChange={e => { setReportEndDate(e.target.value); setReportPage(1) }} /></label>
+              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Brand<select value={reportBrand} onChange={e => { setReportBrand(e.target.value); setReportPage(1) }} style={{ minWidth: 0, padding: 11, border: '1px solid #dfe2eb', borderRadius: 9, background: '#fff' }}><option value="all">Semua brand</option>{[...new Set([...brands.map(b => b.nama), ...sales.map(s => s.brand || 'Tanpa brand')])].sort((a,b) => a.localeCompare(b)).map(brand => <option key={brand} value={brand}>{brand}</option>)}</select></label>
+            </div>
+            <div className="metric-grid" style={{ marginBottom: 22 }}>
+              <article className="metric-card"><div className="metric-top"><span>Total omzet</span><div className="metric-icon purple"><TrendingUp size={19} /></div></div><div className="metric-value">{rupiah(reportRevenue)}</div><div className="metric-foot"><span className="foot-neutral">Sesuai periode dan filter brand</span></div></article>
+              <article className="metric-card"><div className="metric-top"><span>Unit terjual</span><div className="metric-icon blue"><ShoppingCart size={19} /></div></div><div className="metric-value">{reportQty.toLocaleString('id-ID')}<small> unit</small></div><div className="metric-foot"><span className="foot-neutral">Dari transaksi terpilih</span></div></article>
+              <article className="metric-card"><div className="metric-top"><span>Jumlah transaksi</span><div className="metric-icon purple"><Activity size={19} /></div></div><div className="metric-value">{reportSales.length.toLocaleString('id-ID')}</div><div className="metric-foot"><span className="foot-neutral">Catatan penjualan</span></div></article>
+            </div>
+            <div className="inventory-heading"><div><h2>Ringkasan per brand</h2><p>{reportByBrand.length.toLocaleString('id-ID')} brand dengan transaksi pada periode terpilih.</p></div></div>
+            <div className="table-scroll"><table><thead><tr><th>BRAND</th><th>TRANSAKSI</th><th>UNIT TERJUAL</th><th>OMZET</th></tr></thead><tbody>{reportByBrand.map(row => <tr key={row.brand}><td><b>{row.brand}</b></td><td>{row.transactions.toLocaleString('id-ID')}</td><td>{row.qty.toLocaleString('id-ID')}</td><td className="price-cell">{rupiah(row.revenue)}</td></tr>)}{reportByBrand.length === 0 && <tr><td colSpan={4} className="empty-state">Tidak ada penjualan pada periode ini.</td></tr>}</tbody></table></div>
+            <div className="inventory-heading" style={{ marginTop: 24 }}><div><h2>Detail penjualan</h2><p>Menampilkan 7 catatan per halaman.</p></div></div>
+            <div className="table-scroll"><table><thead><tr><th>TANGGAL</th><th>BARANG</th><th>BRAND</th><th>QTY</th><th>HARGA / UNIT</th><th>TOTAL</th></tr></thead><tbody>{visibleReportSales.map(sale => <tr key={sale.id}><td>{new Date(sale.tanggal_pembelian + 'T00:00:00').toLocaleDateString('id-ID')}</td><td>{products.find(p => p.id === sale.barang_id)?.name || 'Barang tidak ditemukan'}</td><td>{sale.brand || 'Tanpa brand'}</td><td>{Number(sale.qty || 0).toLocaleString('id-ID')}</td><td>{rupiah(sale.harga)}</td><td className="price-cell">{rupiah(Number(sale.qty || 0) * sale.harga)}</td></tr>)}{reportSales.length === 0 && <tr><td colSpan={6} className="empty-state">Tidak ada data penjualan pada filter ini.</td></tr>}</tbody></table></div>{pagination('penjualan laporan', reportSales.length, reportPage, reportPageCount, setReportPage)}
+          </section>}
+
+          {activeNav === 'Barang & Stok' && <section className="panel inventory-panel"><div className="inventory-heading"><div><h2>Daftar barang</h2><p>{loading ? 'Memuat data dari Supabase...' : 'Data barang dari database StokFlow'}</p></div><button className="text-action" onClick={() => loadData()}>Muat ulang <ArrowUpRight size={15} /></button></div><div className="table-tools"><div className="search-field"><Search size={17} /><input placeholder="Cari nama barang, SKU, atau brand..." value={query} onChange={e => { setQuery(e.target.value); setInventoryPage(1) }} />{query && <button onClick={() => setQuery('')}><X size={15} /></button>}</div><button className="filter-button" onClick={() => setNotice('Filter lanjutan kita aktifkan pada tahap berikutnya.')}><SlidersHorizontal size={16} /> Filter</button></div><div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>KATEGORI</th><th>STOK</th><th>HARGA / UNIT</th><th>STATUS</th><th></th></tr></thead><tbody>{visibleProducts.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td className="muted-cell">{p.category}</td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td className="price-cell">{p.price ? rupiah(p.price) : 'Belum diatur'}</td><td><span className={'status-badge ' + (p.status === 'Aman' ? 'status-safe' : p.status === 'Menipis' ? 'status-low' : 'status-out')}><i />{p.status}</span></td><td><button className="row-more"><MoreHorizontal size={18} /></button></td></tr>)}{filtered.length === 0 && <tr><td colSpan={7} className="empty-state">Tidak ada barang yang cocok.</td></tr>}</tbody></table></div>{pagination('barang', filtered.length, inventoryPage, inventoryPageCount, setInventoryPage)}<div className="table-footer"><span>Hasil pencarian: <b>{filtered.length}</b> dari <b>{products.length}</b> barang</span><span>● Data live dari Supabase</span></div></section>}
           <footer className="page-footer"><span>© 2026 StokFlow <span>·</span> Inventory made clearer.</span><span><i /> Database aktif</span></footer>
         </div>
       </main>
