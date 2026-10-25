@@ -1,22 +1,41 @@
 # StokFlow
 
-Aplikasi web manajemen stok barang berbasis React, TypeScript, Vite, dan Tailwind CSS.
+Aplikasi manajemen stok berbasis React, TypeScript, dan Vite, dipublikasikan melalui GitHub Pages.
 
-## Status saat ini
-Fondasi aplikasi dan dashboard pratinjau sudah dibuat. Daftar barang dan ringkasan stok memakai data contoh lokal di browser. Belum ada koneksi Supabase dan belum digunakan untuk transaksi stok sebenarnya.
+**Website live:** https://toniimam.github.io/
+
+## Status terverifikasi
+
+- Login admin menggunakan Supabase Auth.
+- Data tersimpan di Supabase, bukan sekadar data contoh browser.
+- Dashboard membaca 1.259 barang, 12 brand, 145 penjualan, dan 192 transaksi pada audit 26 Oktober 2026.
+- Target omzet bulanan tiap brand disimpan di `brand.target_bulanan`.
+- Realisasi omzet bulan berjalan dihitung dari `penjualan.qty × penjualan.harga`, berdasarkan `tanggal_pembelian`, sehingga memakai harga yang tercatat saat transaksi.
+- Deployment otomatis berjalan melalui GitHub Actions.
+- Tabel utama menggunakan Row Level Security (RLS) dengan kebijakan admin.
+
+## Keamanan yang sudah diperkuat
+
+- View `public.v_stock` memakai `security_invoker=true` dan akses anonim dicabut agar kebijakan RLS tabel sumber tetap berlaku.
+- Fungsi `edit_penjualan_atomic` memerlukan identitas pengguna yang terautentikasi dan terdaftar sebagai admin.
+- Akses anonim ke fungsi tersebut dicabut. Validasi kuantitas, harga, brand, dan tanggal ditambahkan di sisi database.
+- Tidak ada service-role key yang digunakan pada frontend.
+
+## Roadmap
+
+1. **Penguatan keamanan lanjutan:** tindak lanjut pemeriksaan Supabase, termasuk perlindungan kata sandi bocor dan peninjauan tabel pembatasan percobaan login.
+2. **Alur transaksi lengkap:** implementasi dan pengujian UI untuk barang masuk, catat penjualan, edit/hapus penjualan dengan rollback stok atomik.
+3. **Laporan:** statistik lintas brand, filter periode, dan ekspor laporan.
+4. **Validasi operasional:** uji akses admin/non-admin, konsistensi stok terhadap transaksi, serta uji regresi fitur sebelum setiap rilis.
 
 ## Pengembangan lokal
+
 ```bash
 npm install
 npm run dev
 npm run build
 ```
 
-## Rencana berikutnya
-1. Verifikasi deployment dan pratinjau live.
-2. Konfigurasi Supabase dengan public/anon key, autentikasi, dan Row Level Security (RLS).
-3. Implementasi barang, transaksi masuk, penjualan, dan rollback stok yang aman.
-4. Statistik semua brand dan ekspor laporan.
+## Catatan keamanan
 
-## Keamanan
-Jangan pernah menaruh Supabase service-role key di browser atau repository. Integrasi database harus memakai kebijakan RLS dan validasi transaksi di sisi database.
+Frontend hanya boleh menggunakan Supabase publishable key. Jangan pernah memasukkan service-role key atau secret key ke kode browser maupun repository. Semua operasi data harus tetap dilindungi RLS dan validasi database.
