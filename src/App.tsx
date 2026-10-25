@@ -157,6 +157,26 @@ export default function App() {
   const lowStock = products.filter(p => p.stock > 0 && p.stock <= 10).length
   const outStock = products.filter(p => p.stock <= 0).length
 
+  const stockByBrand = useMemo(() => {
+    const totals = new Map<string, { items: number; stock: number }>()
+    products.forEach(p => {
+      const current = totals.get(p.brand) || { items: 0, stock: 0 }
+      current.items += 1
+      current.stock += p.stock
+      totals.set(p.brand, current)
+    })
+    return Array.from(totals.entries())
+      .map(([name, value]) => ({ name, ...value }))
+      .sort((a, b) => b.stock - a.stock)
+      .slice(0, 5)
+  }, [products])
+  const attentionProducts = useMemo(
+    () => products.filter(p => p.stock <= 10).sort((a, b) => a.stock - b.stock).slice(0, 6),
+    [products],
+  )
+  const safeStock = products.filter(p => p.stock > 10).length
+  const maxBrandStock = Math.max(1, ...stockByBrand.map(b => b.stock))
+
   if (!token) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 20, background: '#f5f6fb', fontFamily: 'Inter,system-ui,sans-serif' }}>
       <form onSubmit={login} style={{ width: '100%', maxWidth: 420, background: '#fff', padding: 32, borderRadius: 20, boxShadow: '0 18px 60px rgba(20,30,60,.10)' }}>
@@ -186,7 +206,40 @@ export default function App() {
           {notice && <div className="demo-alert"><div className="alert-symbol"><Activity size={17} /></div><div><b>Status</b><span>{notice}</span></div><button onClick={() => setNotice('')} style={{ marginLeft: 'auto', border: 0, background: 'transparent', cursor: 'pointer' }}><X size={16} /></button></div>}
           {showAdd && <section className="panel" style={{ marginBottom: 18, padding: 20 }}><div className="panel-heading"><div><h2>Tambah barang</h2><p>Data akan langsung disimpan ke Supabase.</p></div><button className="more-button" onClick={() => setShowAdd(false)}><X size={20} /></button></div><div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}><input placeholder="Nama barang" value={newName} onChange={e => setNewName(e.target.value)} /><input placeholder="Brand" value={newBrand} onChange={e => setNewBrand(e.target.value)} /><input placeholder="Kategori" value={newCategory} onChange={e => setNewCategory(e.target.value)} /><input type="number" min="0" placeholder="Stok awal" value={newStock} onChange={e => setNewStock(e.target.value)} /><input type="number" min="0" placeholder="Harga" value={newPrice} onChange={e => setNewPrice(e.target.value)} /><button className="button-primary" onClick={addProduct}>Simpan ke database</button></div></section>}
           <section className="metric-grid"><article className="metric-card"><div className="metric-top"><span>Total jenis barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{products.length}<small> item</small></div><div className="metric-foot"><span className="foot-neutral"><Boxes size={14} /> Database</span></div></article><article className="metric-card"><div className="metric-top"><span>Total stok tersedia</span><div className="metric-icon blue"><Boxes size={19} /></div></div><div className="metric-value">{totalStock}<small> unit</small></div><div className="metric-foot"><span className="foot-positive"><TrendingUp size={14} /> Semua brand</span></div></article><article className="metric-card"><div className="metric-top"><span>Stok menipis</span><div className="metric-icon amber"><ArrowDownLeft size={19} /></div></div><div className="metric-value">{lowStock}<small> item</small></div><div className="metric-foot"><span className="foot-warning">Perlu diperiksa</span></div></article><article className="metric-card"><div className="metric-top"><span>Stok habis</span><div className="metric-icon red"><ArrowUpRight size={19} /></div></div><div className="metric-value">{outStock}<small> item</small></div><div className="metric-foot"><span className="foot-danger">Perlu pengadaan</span></div></article></section>
-          <section className="panel inventory-panel"><div className="inventory-heading"><div><h2>Daftar barang</h2><p>{loading ? 'Memuat data dari Supabase...' : 'Data barang dari database StokFlow'}</p></div><button className="text-action" onClick={() => loadData()}>Muat ulang <ArrowUpRight size={15} /></button></div><div className="table-tools"><div className="search-field"><Search size={17} /><input placeholder="Cari nama barang, SKU, atau brand..." value={query} onChange={e => setQuery(e.target.value)} />{query && <button onClick={() => setQuery('')}><X size={15} /></button>}</div><button className="filter-button" onClick={() => setNotice('Filter lanjutan kita aktifkan pada tahap berikutnya.')}><SlidersHorizontal size={16} /> Filter</button></div><div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>KATEGORI</th><th>STOK</th><th>HARGA / UNIT</th><th>STATUS</th><th></th></tr></thead><tbody>{filtered.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td className="muted-cell">{p.category}</td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td className="price-cell">{p.price ? rupiah(p.price) : 'Belum diatur'}</td><td><span className={'status-badge ' + (p.status === 'Aman' ? 'status-safe' : p.status === 'Menipis' ? 'status-low' : 'status-out')}><i />{p.status}</span></td><td><button className="row-more"><MoreHorizontal size={18} /></button></td></tr>)}{filtered.length === 0 && <tr><td colSpan={7} className="empty-state">Tidak ada barang yang cocok.</td></tr>}</tbody></table></div><div className="table-footer"><span>Menampilkan <b>{filtered.length}</b> dari <b>{products.length}</b> barang</span><span>● Data live dari Supabase</span></div></section>
+          {activeNav === 'Dashboard' && <section className="chart-grid dashboard-grid">
+            <article className="panel activity-panel">
+              <div className="panel-heading"><div><h2>Komposisi kondisi stok</h2><p>Ringkasan kondisi seluruh barang dari database</p></div><span className="demo-pill">DATA LIVE</span></div>
+              <div style={{ display: 'grid', gap: 18, marginTop: 25 }}>
+                {[{ label: 'Stok aman', count: safeStock, color: '#29b783' }, { label: 'Stok menipis', count: lowStock, color: '#e6a43c' }, { label: 'Stok habis', count: outStock, color: '#e27676' }].map(item => (
+                  <div key={item.label}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8, color: '#707a8e', fontSize: 11 }}><span>{item.label}</span><b style={{ color: '#343d51' }}>{item.count.toLocaleString('id-ID')} barang</b></div>
+                    <div style={{ height: 9, borderRadius: 99, background: '#f0f2f7', overflow: 'hidden' }}><div style={{ width: `${products.length ? item.count / products.length * 100 : 0}%`, height: '100%', borderRadius: 99, background: item.color, transition: 'width .25s ease' }} /></div>
+                  </div>
+                ))}
+              </div>
+              <div className="chart-legend" style={{ marginTop: 24 }}><span><i className="legend-dot" style={{ background: '#29b783' }} /> Aman: lebih dari 10 unit</span><span><i className="legend-dot" style={{ background: '#e6a43c' }} /> Menipis: 1–10 unit</span><span><i className="legend-dot" style={{ background: '#e27676' }} /> Habis: 0 atau kurang</span></div>
+            </article>
+            <article className="panel brand-panel">
+              <div className="panel-heading"><div><h2>Stok per brand</h2><p>Lima brand dengan stok terbesar</p></div></div>
+              <div style={{ display: 'grid', gap: 17, marginTop: 23 }}>
+                {stockByBrand.map((brand, index) => <div key={brand.name}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 7, fontSize: 10, color: '#707a8e' }}><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{brand.name}</span><b style={{ color: '#343d51', flexShrink: 0 }}>{brand.stock.toLocaleString('id-ID')} unit</b></div>
+                  <div style={{ height: 7, borderRadius: 99, background: '#f0f2f7', overflow: 'hidden' }}><div style={{ width: `${Math.max(0, brand.stock) / maxBrandStock * 100}%`, height: '100%', borderRadius: 99, background: ['#6268e8', '#55b7e7', '#f0b64c', '#ed8585', '#53b69a'][index] }} /></div>
+                  <div style={{ marginTop: 5, fontSize: 9, color: '#a0a7b5' }}>{brand.items.toLocaleString('id-ID')} jenis barang</div>
+                </div>)}
+                {stockByBrand.length === 0 && <p className="empty-state">Belum ada data brand.</p>}
+              </div>
+            </article>
+            <article className="panel inventory-panel dashboard-attention">
+              <div className="inventory-heading"><div><h2>Perlu perhatian</h2><p>Barang dengan stok 10 unit atau kurang</p></div><button className="text-action" onClick={() => setActiveNav('Barang & Stok')}>Lihat semua <ArrowUpRight size={15} /></button></div>
+              <div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>STOK</th><th>STATUS</th></tr></thead><tbody>
+                {attentionProducts.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td><span className={'status-badge ' + (p.status === 'Menipis' ? 'status-low' : 'status-out')}><i />{p.status}</span></td></tr>)}
+                {attentionProducts.length === 0 && <tr><td colSpan={4} className="empty-state">Tidak ada barang yang perlu perhatian.</td></tr>}
+              </tbody></table></div>
+              <div className="table-footer"><span>Menampilkan <b>{attentionProducts.length}</b> barang prioritas</span><span>● Diperbarui dari Supabase</span></div>
+            </article>
+          </section>}
+          {activeNav !== 'Dashboard' && <section className="panel inventory-panel"><div className="inventory-heading"><div><h2>Daftar barang</h2><p>{loading ? 'Memuat data dari Supabase...' : 'Data barang dari database StokFlow'}</p></div><button className="text-action" onClick={() => loadData()}>Muat ulang <ArrowUpRight size={15} /></button></div><div className="table-tools"><div className="search-field"><Search size={17} /><input placeholder="Cari nama barang, SKU, atau brand..." value={query} onChange={e => setQuery(e.target.value)} />{query && <button onClick={() => setQuery('')}><X size={15} /></button>}</div><button className="filter-button" onClick={() => setNotice('Filter lanjutan kita aktifkan pada tahap berikutnya.')}><SlidersHorizontal size={16} /> Filter</button></div><div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>KATEGORI</th><th>STOK</th><th>HARGA / UNIT</th><th>STATUS</th><th></th></tr></thead><tbody>{filtered.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td className="muted-cell">{p.category}</td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td className="price-cell">{p.price ? rupiah(p.price) : 'Belum diatur'}</td><td><span className={'status-badge ' + (p.status === 'Aman' ? 'status-safe' : p.status === 'Menipis' ? 'status-low' : 'status-out')}><i />{p.status}</span></td><td><button className="row-more"><MoreHorizontal size={18} /></button></td></tr>)}{filtered.length === 0 && <tr><td colSpan={7} className="empty-state">Tidak ada barang yang cocok.</td></tr>}</tbody></table></div><div className="table-footer"><span>Menampilkan <b>{filtered.length}</b> dari <b>{products.length}</b> barang</span><span>● Data live dari Supabase</span></div></section>}
           <footer className="page-footer"><span>© 2026 StokFlow <span>·</span> Inventory made clearer.</span><span><i /> Database aktif</span></footer>
         </div>
       </main>
