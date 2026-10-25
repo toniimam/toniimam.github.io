@@ -21,7 +21,9 @@ Aplikasi manajemen stok berbasis React, TypeScript, dan Vite, dipublikasikan mel
 - RPC pencatatan penjualan, barang masuk, dan penghapusan penjualan memeriksa identitas admin.
 - RPC transaksi sensitif menggunakan `SECURITY INVOKER`; akses anonim ke RPC terkait dicabut.
 - RPC pencatatan penjualan dan barang masuk menghitung stok berdasarkan ledger transaksi yang sama dengan aplikasi.
+- Data aplikasi di memori dibersihkan saat logout atau sesi admin gagal diverifikasi.
 - Akses anonim ke fungsi pembatas percobaan login dicabut karena fungsi tersebut tidak dipakai oleh aplikasi saat ini dan tabel terkait tidak memiliki kebijakan RLS.
+- Indeks foreign key dan indeks tanggal penjualan dibuat untuk membantu pencarian, join, dan filter laporan.
 - Tidak ada service-role key di frontend.
 
 ## Roadmap
@@ -29,9 +31,9 @@ Aplikasi manajemen stok berbasis React, TypeScript, dan Vite, dipublikasikan mel
 1. **Dashboard dan target omzet per brand:** selesai dan ter-deploy.
 2. **Keamanan RPC serta pencatatan penjualan dan barang masuk:** implementasi dan build selesai. Uji alur nyata dengan akun admin masih diperlukan sebelum dinyatakan terverifikasi operasional.
 3. **Edit/hapus penjualan dari antarmuka:** tombol edit dan hapus sudah dihubungkan ke RPC atomik. Edit mempertahankan barang yang sama dan memperbarui ledger terkait, hapus menghapus catatan penjualan beserta transaksi stok terkait. Uji operasional tetap diperlukan dengan transaksi uji yang disetujui.
-4. **Laporan:** filter periode, ringkasan omzet lintas brand, dan ekspor laporan.
-5. **Penguatan keamanan lanjutan:** dilewati sesuai prioritas proyek, form login terautentikasi tetap dipertahankan.
-6. **Optimasi:** evaluasi indeks foreign key dan uji regresi stok, transaksi, serta akses admin/non-admin.
+4. **Laporan:** selesai diimplementasikan dan ter-deploy pada commit `530874bb5cd6aeec17347afcaa906a946e4433c2`. Mendukung filter tanggal dan brand, ringkasan omzet/unit/transaksi per brand, detail berhalaman 7 baris, serta ekspor CSV yang mengikuti filter aktif.
+5. **Pengamanan sesi:** pembersihan data inventaris, transaksi, penjualan, brand, draft target, dan halaman tabel ketika logout atau sesi admin gagal diverifikasi sudah diterapkan. Peringatan Supabase Auth tentang perlindungan kata sandi bocor masih terbuka dan perlu diaktifkan melalui pengaturan Auth di Supabase Dashboard, pengaturan tersebut tidak tersedia melalui konektor yang digunakan pada tahap ini.
+6. **Optimasi database:** indeks untuk `barang.brand_id`, `penjualan.barang_id`, `transaksi.barang_id`, serta `penjualan.tanggal_pembelian` telah dibuat dan diverifikasi. Uji regresi operasional stok, transaksi, serta akses admin/non-admin masih diperlukan.
 
 ## Pengembangan
 
