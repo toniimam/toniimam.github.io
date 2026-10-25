@@ -25,6 +25,17 @@ async function api(path: string, options: RequestInit = {}, token = '') {
   return data
 }
 
+async function apiAll(path: string, currentToken = '') {
+  const pageSize = 1000
+  const rows: any[] = []
+  for (let from = 0; ; from += pageSize) {
+    const batch = await api(path, { headers: { Range: `${from}-${from + pageSize - 1}` } }, currentToken)
+    if (!Array.isArray(batch)) throw new Error('Format data dari Supabase tidak sesuai.')
+    rows.push(...batch)
+    if (batch.length < pageSize) return rows
+  }
+}
+
 const rupiah = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard },
@@ -58,9 +69,9 @@ export default function App() {
     setLoading(true)
     try {
       const [rawBarang, rawBrand, rawTx] = await Promise.all([
-        api('/rest/v1/barang?select=id,nama,stok_awal,brand_id,sku,kategori,harga&order=nama.asc', {}, currentToken),
-        api('/rest/v1/brand?select=id,nama&order=nama.asc', {}, currentToken),
-        api('/rest/v1/transaksi?select=barang_id,type,qty', {}, currentToken),
+        apiAll('/rest/v1/barang?select=id,nama,stok_awal,brand_id,sku,kategori,harga&order=nama.asc', currentToken),
+        apiAll('/rest/v1/brand?select=id,nama&order=nama.asc', currentToken),
+        apiAll('/rest/v1/transaksi?select=barang_id,type,qty', currentToken),
       ])
       const brandList: Brand[] = rawBrand || []
       const txList: Tx[] = rawTx || []
