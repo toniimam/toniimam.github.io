@@ -6,9 +6,55 @@
     <meta name="theme-color" content="#0f172a" />
     <meta name="description" content="StokFlow, dashboard pengelolaan stok barang." />
     <title>StokFlow | Manajemen Stok</title>
+    <script>
+      (function () {
+        function showLoadError(message) {
+          var root = document.getElementById('root');
+          if (root && root.childElementCount > 0) return;
+          var panel = document.getElementById('stokflow-load-error');
+          if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'stokflow-load-error';
+            panel.style.cssText = 'font:16px/1.5 system-ui,sans-serif;max-width:680px;margin:40px auto;padding:24px;color:#172033;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 30px #00000010';
+            document.body.appendChild(panel);
+          }
+          panel.replaceChildren();
+          var heading = document.createElement('h2');
+          heading.textContent = 'StokFlow gagal dimuat';
+          heading.style.cssText = 'margin:0 0 10px;font-size:22px';
+          var detail = document.createElement('p');
+          detail.textContent = message || 'JavaScript tidak berhasil menjalankan aplikasi.';
+          detail.style.cssText = 'overflow-wrap:anywhere;color:#475569';
+          var help = document.createElement('p');
+          help.textContent = 'Coba muat ulang halaman. Jika pesan ini muncul lagi, kirimkan detail di atas agar masalahnya bisa diperbaiki.';
+          panel.append(heading, detail, help);
+        }
+        window.addEventListener('error', function (event) {
+          if (event.target && event.target !== window) {
+            var target = event.target;
+            if (target.tagName === 'SCRIPT' || target.tagName === 'LINK') {
+              showLoadError('Aset gagal dimuat: ' + (target.src || target.href || target.tagName));
+              return;
+            }
+          }
+          showLoadError(event.message || 'Terjadi kesalahan JavaScript.');
+        }, true);
+        window.addEventListener('unhandledrejection', function (event) {
+          var reason = event.reason;
+          showLoadError('Kesalahan JavaScript: ' + (reason && reason.message ? reason.message : String(reason || 'Promise ditolak')));
+        });
+        window.setTimeout(function () {
+          var root = document.getElementById('root');
+          if (root && root.childElementCount === 0) {
+            showLoadError('Halaman terbuka, tetapi aplikasi belum tampil setelah 12 detik. Kemungkinan file JavaScript gagal dimuat atau terjadi kesalahan saat aplikasi dimulai.');
+          }
+        }, 12000);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>StokFlow membutuhkan JavaScript agar dapat berjalan. Aktifkan JavaScript pada browser Anda.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
