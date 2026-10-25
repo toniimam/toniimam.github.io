@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, ChevronDown, CircleHelp, Download, LayoutDashboard, Menu, MoreHorizontal, Package, Plus, Search, Settings2, ShoppingCart, SlidersHorizontal, Sparkles, TrendingUp, Truck, X } from 'lucide-react'
 
-type Brand = { id: number; nama: string }
+type Brand = { id: number; nama: string; target_bulanan: number }
 type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
 type Tx = { barang_id: number; type: string; qty: number; tanggal?: string }
 
@@ -53,6 +53,7 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([])
   const [transactions, setTransactions] = useState<Tx[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
+  const [targetDrafts, setTargetDrafts] = useState<Record<number, string>>({})
   const [activeNav, setActiveNav] = useState('Dashboard')
   const [query, setQuery] = useState('')
   const [showAdd, setShowAdd] = useState(false)
@@ -71,7 +72,7 @@ export default function App() {
     try {
       const [rawBarang, rawBrand, rawTx] = await Promise.all([
         apiAll('/rest/v1/barang?select=id,nama,stok_awal,brand_id,sku,kategori,harga&order=nama.asc', currentToken),
-        apiAll('/rest/v1/brand?select=id,nama&order=nama.asc', currentToken),
+        apiAll('/rest/v1/brand?select=id,nama,target_bulanan&order=nama.asc', currentToken),
         apiAll('/rest/v1/transaksi?select=barang_id,type,qty,tanggal', currentToken),
       ])
       const brandList: Brand[] = rawBrand || []
@@ -129,6 +130,18 @@ export default function App() {
     finally { setLoginLoading(false) }
   }
 
+  async function saveBrandTarget(brand: Brand) {
+    const target = Math.max(0, Number(targetDrafts[brand.id] ?? brand.target_bulanan) || 0)
+    try {
+      await api(`/rest/v1/brand?id=eq.${brand.id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ target_bulanan: target }) }, token)
+      setBrands(current => current.map(item => item.id === brand.id ? { ...item, target_bulanan: target } : item))
+      setTargetDrafts(current => ({ ...current, [brand.id]: String(target) }))
+      setNotice(`Target ${brand.nama} berhasil disimpan.`)
+    } catch (e: any) {
+      setNotice(`Target ${brand.nama} gagal disimpan: ${e.message}`)
+    }
+  }
+
   async function addProduct() {
     if (!newName.trim() || !newBrand.trim()) { setNotice('Isi nama barang dan brand terlebih dahulu.'); return }
     try {
@@ -174,6 +187,12 @@ export default function App() {
   const trendMax = Math.max(1, ...lastSevenDays.flatMap(d => [d.sold, d.incoming]))
   const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size
   const recentActivityCount = monthTransactions.length
+  const brandMonthlySales = brands.map(brand => {
+    const brandProductIds = new Set(products.filter(product => product.brand === brand.nama).map(product => product.id))
+    const sold = monthTransactions.filter(tx => tx.type === 'laku' && brandProductIds.has(tx.barang_id)).reduce((sum, tx) => sum + Number(tx.qty || 0), 0)
+    const target = Math.max(0, Number(targetDrafts[brand.id] ?? brand.target_bulanan) || 0)
+    return { ...brand, sold, target, progress: target > 0 ? Math.min(100, sold / target * 100) : 0 }
+  }).sort((a, b) => b.sold - a.sold)
 
   if (!token) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 20, background: '#f5f6fb', fontFamily: 'Inter,system-ui,sans-serif' }}>
@@ -210,6 +229,14 @@ export default function App() {
               <article className="metric-card"><div className="metric-top"><span>Nilai estimasi stok</span><div className="metric-icon purple"><TrendingUp size={19} /></div></div><div className="metric-value" style={{fontSize: inventoryValue >= 1000000000 ? 20 : 23}}>{rupiah(inventoryValue)}</div><div className="metric-foot"><span className="foot-neutral">Berdasarkan harga per unit</span></div></article>
               <article className="metric-card"><div className="metric-top"><span>Perlu pengadaan</span><div className="metric-icon red"><Bell size={19} /></div></div><div className="metric-value">{(lowStock + outStock).toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className={outStock ? 'foot-danger' : 'foot-warning'}>{outStock.toLocaleString('id-ID')} habis, {lowStock.toLocaleString('id-ID')} menipis</span></div></article>
             </div>
+            <article className="panel brand-target-panel">
+              <div className="panel-heading"><div><h2>Brand &amp; target bulanan</h2><p>Penjualan bulan ini dibanding target unit</p></div><span className="demo-pill">{brands.length} BRAND</span></div>
+              <div className="brand-target-grid">{brandMonthlySales.map(brand => <div className="brand-target-item" key={brand.id}>
+                <div className="brand-target-top"><b>{brand.nama}</b><span>{brand.sold.toLocaleString('id-ID')} / {brand.target.toLocaleString('id-ID')} unit</span></div>
+                <div className="brand-target-track"><div style={{ width: brand.progress + '%' }} /></div>
+                <div className="brand-target-bottom"><span>{brand.target > 0 ? Math.round(brand.sold / brand.target * 100) + '% tercapai' : 'Target belum diisi'}</span><div className="brand-target-edit"><input aria-label={'Target bulanan ' + brand.nama} type="number" min="0" value={targetDrafts[brand.id] ?? String(brand.target_bulanan || 0)} onChange={e => setTargetDrafts(current => ({ ...current, [brand.id]: e.target.value }))} /><button onClick={() => saveBrandTarget(brand)}>Simpan</button></div></div>
+              </div>)}</div>
+            </article>
             <div className="chart-grid dashboard-stats-grid">
               <article className="panel activity-panel">
                 <div className="panel-heading"><div><h2>Aktivitas inventaris</h2><p>Pergerakan barang selama 7 hari terakhir</p></div><span className="demo-pill">7 HARI</span></div>
