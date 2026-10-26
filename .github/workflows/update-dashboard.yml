@@ -1,6 +1,7 @@
 name: Update Dashboard
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
   update:
@@ -13,22 +14,17 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import re
           p = Path('src/App.tsx')
           s = p.read_text()
-
-          s = s.replace("  const [targetDrafts, setTargetDrafts] = useState<Record<number, string>>({})\n", "  const [targetDrafts, setTargetDrafts] = useState<Record<number, string>>({})\n  const [dashboardSalesRange, setDashboardSalesRange] = useState<7 | 30>(7)\n  const [expandedBrandTarget, setExpandedBrandTarget] = useState<number | null>(null)\n")
-
-          old = """  const trendMax = Math.max(1, ...lastSevenDays.flatMap(d => [d.sold, d.incoming]))\n  const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size\n  const recentActivityCount = monthTransactions.length\n  const monthSales = sales.filter(sale => {\n"""
-          new = """  const trendMax = Math.max(1, ...lastSevenDays.flatMap(d => [d.sold, d.incoming]))\n  const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size\n  const recentActivityCount = monthTransactions.length\n  const totalStockUnits = products.reduce((sum, p) => sum + Number(p.stock || 0), 0)\n  const monthSales = sales.filter(sale => {\n"""
+          s = s.replace("  const [targetDrafts, setTargetDrafts] = useState<Record<number, string>>({})\n", "  const [targetDrafts, setTargetDrafts] = useState<Record<number, string>>({})\n  const [dashboardSalesRange, setDashboardSalesRange] = useState<7 | 30>(7)\n  const [expandedBrandTarget, setExpandedBrandTarget] = useState<number | null>(null)\n", 1)
+          old = "  const recentActivityCount = monthTransactions.length\n  const monthSales = sales.filter(sale => {\n"
+          new = "  const recentActivityCount = monthTransactions.length\n  const totalStockUnits = products.reduce((sum, p) => sum + Number(p.stock || 0), 0)\n  const monthSales = sales.filter(sale => {\n"
           if old not in s: raise SystemExit('anchor 1 not found')
           s = s.replace(old, new, 1)
-
-          old = """  const brandMonthlySales = brands.map(brand => {\n    const sold = monthSales.filter(sale => (sale.brand || '').trim().toLowerCase() === brand.nama.trim().toLowerCase()).reduce((sum, sale) => sum + Number(sale.qty || 0) * Number(sale.harga || 0), 0)\n    const target = Math.max(0, Number(targetDrafts[brand.id] ?? brand.target_bulanan) || 0)\n    return { ...brand, sold, target, progress: target > 0 ? Math.min(100, sold / target * 100) : 0 }\n  }).sort((a, b) => b.sold - a.sold)\n"""
-          new = old + """  const dashboardSalesDays = Array.from({ length: dashboardSalesRange }, (_, index) => {\n    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (dashboardSalesRange - 1 - index))\n    const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')\n    const sold = sales.filter(sale => sale.tanggal_pembelian === key).reduce((sum, sale) => sum + Number(sale.qty || 0), 0)\n    const revenue = sales.filter(sale => sale.tanggal_pembelian === key).reduce((sum, sale) => sum + Number(sale.qty || 0) * Number(sale.harga || 0), 0)\n    return { key, label: dashboardSalesRange === 7 ? date.toLocaleDateString('id-ID', { weekday: 'short' }) : String(date.getDate()), sold, revenue }\n  })\n  const dashboardSalesMax = Math.max(1, ...dashboardSalesDays.map(d => d.sold))\n  const dashboardSalesQty = dashboardSalesDays.reduce((sum, d) => sum + d.sold, 0)\n  const dashboardSalesRevenue = dashboardSalesDays.reduce((sum, d) => sum + d.revenue, 0)\n  const targetBrands = brandMonthlySales.filter(brand => brand.target > 0)\n  const totalTarget = targetBrands.reduce((sum, brand) => sum + brand.target, 0)\n  const totalAchieved = targetBrands.reduce((sum, brand) => sum + brand.sold, 0)\n  const totalTargetProgress = totalTarget > 0 ? Math.min(100, totalAchieved / totalTarget * 100) : 0\n"""
+          old = "  }).sort((a, b) => b.sold - a.sold)\n\n  if (!token) return ("
+          new = """  }).sort((a, b) => b.sold - a.sold)\n  const dashboardSalesDays = Array.from({ length: dashboardSalesRange }, (_, index) => {\n    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (dashboardSalesRange - 1 - index))\n    const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')\n    const daySales = sales.filter(sale => sale.tanggal_pembelian === key)\n    return { key, label: dashboardSalesRange === 7 ? date.toLocaleDateString('id-ID', { weekday: 'short' }) : String(date.getDate()), sold: daySales.reduce((sum, sale) => sum + Number(sale.qty || 0), 0), revenue: daySales.reduce((sum, sale) => sum + Number(sale.qty || 0) * Number(sale.harga || 0), 0) }\n  })\n  const dashboardSalesMax = Math.max(1, ...dashboardSalesDays.map(d => d.sold))\n  const dashboardSalesQty = dashboardSalesDays.reduce((sum, d) => sum + d.sold, 0)\n  const dashboardSalesRevenue = dashboardSalesDays.reduce((sum, d) => sum + d.revenue, 0)\n  const targetBrands = brandMonthlySales.filter(brand => brand.target > 0)\n  const totalTarget = targetBrands.reduce((sum, brand) => sum + brand.target, 0)\n  const totalAchieved = targetBrands.reduce((sum, brand) => sum + brand.sold, 0)\n  const totalTargetProgress = totalTarget > 0 ? Math.min(100, totalAchieved / totalTarget * 100) : 0\n\n  if (!token) return ("""
           if old not in s: raise SystemExit('anchor 2 not found')
           s = s.replace(old, new, 1)
-
           start = s.index("          {activeNav === 'Dashboard' && <section className=\"dashboard-overview\">")
           end = s.index("          {activeNav === 'Penjualan' && <section", start)
           dashboard = '''          {activeNav === 'Dashboard' && <section className="dashboard-overview">
@@ -38,25 +34,21 @@ jobs:
               <article className="metric-card"><div className="metric-top"><span>Total barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{totalStockUnits.toLocaleString('id-ID')}<small> unit</small></div><div className="metric-foot"><span className="foot-neutral">Jumlah stok aktual seluruh barang</span></div></article>
               <article className="metric-card"><div className="metric-top"><span>Omzet</span><div className="metric-icon red"><TrendingUp size={19} /></div></div><div className="metric-value" style={{fontSize: totalTarget >= 1000000000 ? 19 : 22}}>{rupiah(totalAchieved)}</div><div className="metric-foot"><span className={totalTargetProgress >= 100 ? 'foot-neutral' : 'foot-warning'}>{totalTarget > 0 ? `${rupiah(totalTarget)} target, ${Math.round(totalTargetProgress)}% tercapai` : 'Belum ada target brand'}</span></div></article>
             </div>
-
             <article className="panel activity-panel dashboard-sales-panel">
-              <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Jumlah unit terjual dan omzet berdasarkan periode yang dipilih.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
+              <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Penjualan berdasarkan periode yang dipilih.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
               <div className="dashboard-sales-summary"><div><span>Unit terjual</span><b>{dashboardSalesQty.toLocaleString('id-ID')}</b></div><div><span>Omzet</span><b>{rupiah(dashboardSalesRevenue)}</b></div></div>
               <div className={'dashboard-sales-bars sales-days-' + dashboardSalesRange}>{dashboardSalesDays.map(day => <div className="dashboard-sales-day" key={day.key}><div className="dashboard-sales-bar-wrap"><div title={day.sold.toLocaleString('id-ID') + ' unit'} className="dashboard-sales-bar" style={{height: Math.max(day.sold ? 5 : 2, day.sold / dashboardSalesMax * 100) + '%'}} /></div><span>{day.label}</span></div>)}</div>
             </article>
-
             <article className="panel brand-target-panel">
-              <div className="panel-heading"><div><h2>Brand &amp; target penjualan</h2><p>Realisasi omzet bulan ini dibanding target. Brand tanpa target tidak masuk perhitungan omzet dashboard.</p></div><span className="demo-pill">{brands.length} BRAND</span></div>
+              <div className="panel-heading"><div><h2>Brand &amp; target penjualan</h2><p>Realisasi omzet bulan ini. Brand tanpa target tidak dihitung pada omzet dashboard.</p></div><span className="demo-pill">{brands.length} BRAND</span></div>
               <div className="brand-target-grid">{brandMonthlySales.map(brand => <details className="brand-target-item brand-target-collapsible" key={brand.id} open={expandedBrandTarget === brand.id} onToggle={e => { if (e.currentTarget.open) setExpandedBrandTarget(brand.id); else if (expandedBrandTarget === brand.id) setExpandedBrandTarget(null) }}>
                 <summary className="brand-target-summary"><div><b>{brand.nama}</b><span>{brand.target > 0 ? `${rupiah(brand.sold)} / ${rupiah(brand.target)}` : `${rupiah(brand.sold)} · tanpa target`}</span></div><div className="brand-target-summary-right"><span>{brand.target > 0 ? Math.round(brand.sold / brand.target * 100) + '%' : '-'}</span><span className="brand-target-chevron">⌄</span></div></summary>
                 <div className="brand-target-track"><div style={{ width: brand.progress + '%' }} /></div>
                 <div className="brand-target-bottom"><span>{brand.target > 0 ? 'Target bulanan' : 'Target belum diisi'}</span><div className="brand-target-edit"><input aria-label={'Target penjualan bulanan dalam Rupiah untuk ' + brand.nama} type="number" min="0" step="1000" value={targetDrafts[brand.id] ?? String(brand.target_bulanan || 0)} onChange={e => setTargetDrafts(current => ({ ...current, [brand.id]: e.target.value }))} /><button onClick={() => saveBrandTarget(brand)}>Simpan</button></div></div>
               </details>)}</div>
             </article>
-
             <div className="dashboard-note"><Sparkles size={16}/><span>Ringkasan dari Supabase saat data dimuat. Halaman <b>Barang &amp; Stok</b> khusus untuk pencarian dan tabel barang.</span><button onClick={() => loadData()} disabled={loading}>{loading ? 'Memuat...' : 'Perbarui data'}</button></div>
-          </section>}
-'''
+          </section>}\n'''
           s = s[:start] + dashboard + s[end:]
           p.write_text(s)
       - name: Commit changes
