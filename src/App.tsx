@@ -406,11 +406,11 @@ export default function App() {
       <main className="main-area">
         <header className="topbar">
           <div className="brand-lockup"><div className="brand-mark"><Boxes size={22} /></div><div><strong>stokflow</strong><span>INVENTORY SYSTEM</span></div></div>
-          <div className="top-actions"><div className="system-status"><span /> Supabase aktif</div><button className="icon-button" title="Status database" onClick={() => setNotice('Database tersambung dan data sudah dimuat.')}><Bell size={19} /></button><div className="top-avatar" title={email}>{email.slice(0, 2).toUpperCase()}</div><button className="logout-button" onClick={logout}><LogOut size={16} /><span>Keluar</span></button></div>
+          <div className="top-actions"><button className="icon-button" title="Status database" onClick={() => setNotice('Terhubung ke database StokFlow.')}><Bell size={19} /></button><div className="top-avatar" title={email}>{email.slice(0, 2).toUpperCase()}</div><button className="logout-button" onClick={logout}><LogOut size={16} /><span>Keluar</span></button></div>
         </header>
         <nav className="desktop-nav" aria-label="Navigasi utama">{navItems.map(item => { const Icon = item.icon; return <button key={item.label} className={'nav-item ' + (activeNav === item.label ? 'nav-active' : '')} onClick={() => setActiveNav(item.label)}><Icon size={17} /><span>{item.label}</span>{item.label === 'Barang & Stok' && <span className="nav-count">{products.length}</span>}</button> })}</nav>
         <div className="content">
-          <div className="welcome-row"><div><div className="eyebrow"><Sparkles size={14} /> DATABASE STOKFLOW</div><h1>{activeNav}</h1><p>Data inventaris langsung dari Supabase, bukan data demo.</p></div></div>
+          <div className="welcome-row"><div><div className="eyebrow"><Sparkles size={14} /> DATABASE STOKFLOW</div><h1>{activeNav}</h1><p>Ringkasan stok dan penjualan untuk memantau performa toko.</p></div></div>
           {notice && <div className="toast" role="status"><span className="toast-check">✓</span><span>{notice}</span><button aria-label="Tutup pemberitahuan" onClick={() => setNotice('')}><X size={15} /></button></div>}
           {activeNav === 'Dashboard' && <section className="dashboard-overview">
   <div className="metric-grid">
