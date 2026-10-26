@@ -69,6 +69,7 @@ export default function App() {
   const [salePrice, setSalePrice] = useState('0')
   const [saleDate, setSaleDate] = useState(todayLocal())
   const [incomingProductId, setIncomingProductId] = useState('')
+  const [incomingSearch, setIncomingSearch] = useState('')
   const [incomingQty, setIncomingQty] = useState('1')
   const [incomingDate, setIncomingDate] = useState(todayLocal())
   const [adjustProductId, setAdjustProductId] = useState('')
@@ -309,6 +310,11 @@ export default function App() {
   const pageSize = 7
   const sortedSales = useMemo(() => [...sales].sort((a,b) => b.tanggal_pembelian.localeCompare(a.tanggal_pembelian) || b.id-a.id), [sales])
   const incomingTransactions = useMemo(() => transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').sort((a,b) => (b.tanggal || '').localeCompare(a.tanggal || '') || b.id-a.id), [transactions])
+  const incomingSearchResults = useMemo(() => {
+    const q = incomingSearch.trim().toLowerCase()
+    if (q.length < 2) return []
+    return products.filter(p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)).slice(0, 8)
+  }, [products, incomingSearch])
   const inventoryPageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const salesPageCount = Math.max(1, Math.ceil(sortedSales.length / pageSize))
   const incomingPageCount = Math.max(1, Math.ceil(incomingTransactions.length / pageSize))
@@ -484,11 +490,17 @@ export default function App() {
           {activeNav === 'Barang Masuk' && <section className="panel inventory-panel" style={{ padding: 20 }}>
             <div className="inventory-heading"><div><h2>Catat barang masuk</h2><p>Pergerakan stok divalidasi database sebelum disimpan.</p></div><span className="demo-pill">{transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').length.toLocaleString('id-ID')} DATA</span></div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 12, margin: '18px 0 24px' }}>
-              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Barang
-                <select value={incomingProductId} onChange={e => setIncomingProductId(e.target.value)} style={{ minWidth: 0, padding: 11, border: '1px solid #dfe2eb', borderRadius: 9, background: '#fff' }}>
-                  <option value="">Pilih barang</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} · stok {p.stock}</option>)}
-                </select>
-              </label>
+              <div style={{ display: 'grid', gap: 7, position: 'relative' }}>
+      <label style={{ fontSize: 13, fontWeight: 650 }}>Barang</label>
+      <div style={{ position: 'relative' }}>
+        <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8990a3', pointerEvents: 'none' }} />
+        <input value={incomingSearch} onChange={e => { setIncomingSearch(e.target.value); if (!e.target.value.trim()) setIncomingProductId('') }} placeholder="Cari nama barang atau brand..." style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px 11px 36px', border: '1px solid #dfe2eb', borderRadius: 9, background: '#fff' }} />
+      </div>
+      {incomingSearch.trim().length >= 2 && !incomingProductId && <div style={{ border: '1px solid #e2e5ed', borderRadius: 9, background: '#fff', overflow: 'hidden', boxShadow: '0 10px 25px rgba(20,30,60,.08)' }}>
+        {incomingSearchResults.length > 0 ? incomingSearchResults.map(p => <button key={p.id} type="button" onClick={() => { setIncomingProductId(String(p.id)); setIncomingSearch(p.name) }} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, textAlign: 'left', padding: '11px 12px', border: 0, borderBottom: '1px solid #eef0f5', background: '#fff', cursor: 'pointer' }}><span style={{ minWidth: 0 }}><b style={{ display: 'block', fontSize: 13 }}>{p.name}</b><span style={{ display: 'block', marginTop: 3, color: '#747b8d', fontSize: 12 }}>{p.brand}</span></span><span style={{ flexShrink: 0, fontSize: 12, color: p.stock < 0 ? '#c43d4b' : '#747b8d' }}>Stok {p.stock.toLocaleString('id-ID')}</span></button>) : <div style={{ padding: 12, color: '#747b8d', fontSize: 13 }}>Barang tidak ditemukan.</div>}
+      </div>}
+      {incomingProductId && (() => { const selected = products.find(p => p.id === Number(incomingProductId)); return selected ? <div style={{ padding: '10px 12px', border: '1px solid #dfe2eb', borderRadius: 9, background: '#f8f9fc' }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}><div style={{ minWidth: 0 }}><b style={{ display: 'block', fontSize: 13 }}>{selected.name}</b><span style={{ color: '#747b8d', fontSize: 12 }}>{selected.brand} · stok {selected.stock.toLocaleString('id-ID')} unit</span></div><button type="button" onClick={() => { setIncomingProductId(''); setIncomingSearch('') }} style={{ border: 0, background: 'transparent', color: '#747b8d', cursor: 'pointer', padding: 4 }} title="Ganti barang"><X size={16} /></button></div></div> : null })()}
+    </div>
               <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Jumlah masuk (unit)
                 <input type="number" min="1" step="1" value={incomingQty} onChange={e => setIncomingQty(e.target.value)} />
               </label>
