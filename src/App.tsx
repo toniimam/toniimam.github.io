@@ -81,6 +81,8 @@ export default function App() {
   const [adjustProductId, setAdjustProductId] = useState('')
   const [adjustStock, setAdjustStock] = useState('0')
   const [adjustDate, setAdjustDate] = useState(todayLocal())
+  const [inventoryAdjustProduct, setInventoryAdjustProduct] = useState<Product | null>(null)
+  const [inventoryAdjustStock, setInventoryAdjustStock] = useState('0')
   const [savingTransaction, setSavingTransaction] = useState(false)
   const [inventoryPage, setInventoryPage] = useState(1)
   const [salesPage, setSalesPage] = useState(1)
@@ -288,29 +290,42 @@ export default function App() {
     } finally { setSavingTransaction(false) }
   }
 
-  async function adjustProductFromRow(product: Product) {
+  function openInventoryAdjust(product: Product) {
     const currentStock = stockAtDate(product.id, todayLocal())
     if (currentStock === null) {
       setNotice('Stok barang tidak dapat dihitung, penyesuaian dibatalkan.')
       return
     }
-    const entered = window.prompt(`Adjust stok: ${product.name}\nStok sistem saat ini: ${currentStock}\nMasukkan jumlah stok fisik yang benar:`, String(currentStock))
-    if (entered === null) return
-    const targetStock = Number(entered.trim())
-    if (!entered.trim() || !Number.isFinite(targetStock)) {
-      setNotice('Penyesuaian gagal: masukkan jumlah stok berupa angka yang valid.')
+    setInventoryAdjustProduct(product)
+    setInventoryAdjustStock(String(currentStock))
+    setNotice('')
+  }
+
+  async function saveInventoryAdjust() {
+    const product = inventoryAdjustProduct
+    const targetStock = Number(inventoryAdjustStock)
+    if (!product) return
+    if (!inventoryAdjustStock.trim() || !Number.isFinite(targetStock)) {
+      setNotice('Jumlah stok fisik harus berupa angka yang valid.')
       return
     }
-    if (targetStock === currentStock) {
+    const expectedStock = stockAtDate(product.id, todayLocal())
+    if (expectedStock === null) {
+      setNotice('Stok barang tidak dapat dihitung, penyesuaian dibatalkan.')
+      return
+    }
+    if (targetStock === expectedStock) {
       setNotice('Tidak ada perubahan, stok fisik sama dengan stok sistem.')
+      setInventoryAdjustProduct(null)
       return
     }
     setSavingTransaction(true)
     try {
       await api('/rest/v1/rpc/catat_transaksi_stok_atomic', {
         method: 'POST',
-        body: JSON.stringify({ p_barang_id: product.id, p_tanggal: todayLocal(), p_type: 'adjust', p_qty: targetStock, p_expected_stock: currentStock })
+        body: JSON.stringify({ p_barang_id: product.id, p_tanggal: todayLocal(), p_type: 'adjust', p_qty: targetStock, p_expected_stock: expectedStock })
       }, token)
+      setInventoryAdjustProduct(null)
       await loadData(token)
       setNotice(`Adjust stok ${product.name} berhasil disimpan ke database.`)
     } catch (e: any) {
@@ -581,10 +596,25 @@ export default function App() {
             <div className="inventory-heading"><div><h2>Riwayat penyesuaian</h2><p>Riwayat penyesuaian manual yang tersimpan di buku transaksi.</p></div><button className="text-action" onClick={() => loadData()} disabled={loading}>Muat ulang <ArrowUpRight size={15} /></button></div>
             <div className="table-scroll"><table><thead><tr><th>TANGGAL</th><th>BARANG</th><th>JENIS</th><th>SELISIH STOK</th></tr></thead><tbody>{transactions.filter(t => t.type === 'adjust' || t.type === 'adjust_masuk' || t.type === 'adjust_keluar').sort((a,b) => (b.tanggal || '').localeCompare(a.tanggal || '') || b.id-a.id).slice(0,50).map(tx => <tr key={tx.id}><td>{tx.tanggal ? new Date(tx.tanggal + 'T00:00:00').toLocaleDateString('id-ID') : '-'}</td><td>{products.find(p => p.id === tx.barang_id)?.name || 'Barang tidak ditemukan'}</td><td>{tx.type === 'adjust' ? 'Penyesuaian' : tx.type === 'adjust_masuk' ? 'Koreksi masuk' : 'Koreksi keluar'}</td><td className={Number(tx.qty) < 0 || tx.type === 'adjust_keluar' ? 'stock-zero' : ''}>{(tx.type === 'adjust_keluar' ? -Math.abs(Number(tx.qty)) : Number(tx.qty)).toLocaleString('id-ID')} unit</td></tr>)}{transactions.filter(t => t.type === 'adjust' || t.type === 'adjust_masuk' || t.type === 'adjust_keluar').length === 0 && <tr><td colSpan={4} className="empty-state">Belum ada penyesuaian stok.</td></tr>}</tbody></table></div>
           </section>}
-          {activeNav === 'Barang & Stok' && <section className="panel inventory-panel"><div className="inventory-heading"><div><h2>Daftar barang</h2><p>{loading ? 'Memuat data dari Supabase...' : 'Data barang dari database StokFlow'}</p></div><button className="text-action" onClick={() => loadData()}>Muat ulang <ArrowUpRight size={15} /></button></div><div className="table-tools"><div className="search-field"><Search size={17} /><input placeholder="Cari nama barang, SKU, atau brand..." value={query} onChange={e => { setQuery(e.target.value); setInventoryPage(1) }} />{query && <button onClick={() => setQuery('')}><X size={15} /></button>}</div><button type="button" className={'filter-button ' + (inventoryFilterOpen || inventoryFilterCount > 0 ? 'filter-button-active' : '')} onClick={() => setInventoryFilterOpen(open => !open)} aria-expanded={inventoryFilterOpen}><SlidersHorizontal size={16} /> Filter{inventoryFilterCount > 0 && <span className="filter-count">{inventoryFilterCount}</span>}</button></div>{inventoryFilterOpen && <div className="inventory-filter-panel"><div className="inventory-filter-grid"><label>Brand<select value={inventoryBrandFilter} onChange={e => { setInventoryBrandFilter(e.target.value); setInventoryPage(1) }}><option value="all">Semua brand</option>{inventoryBrands.map(brand => <option key={brand} value={brand}>{brand}</option>)}</select></label><label>Kondisi stok<select value={inventoryStockFilter} onChange={e => { setInventoryStockFilter(e.target.value); setInventoryPage(1) }}><option value="all">Semua kondisi</option><option value="available">Stok tersedia (&gt; 0)</option><option value="empty">Stok kosong / negatif (≤ 0)</option></select></label></div><div className="inventory-filter-actions"><span>{filtered.length.toLocaleString('id-ID')} barang cocok dengan filter</span><button type="button" onClick={() => { setInventoryBrandFilter('all'); setInventoryStockFilter('all'); setInventoryPage(1) }} disabled={inventoryFilterCount === 0}>Reset filter</button><button type="button" className="inventory-filter-done" onClick={() => setInventoryFilterOpen(false)}>Selesai</button></div></div>}<div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>STOK</th><th></th></tr></thead><tbody>{visibleProducts.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td><button type="button" className="row-more" disabled={savingTransaction || loading} onClick={() => adjustProductFromRow(p)} title="Adjust stok">Adjust</button></td></tr>)}{filtered.length === 0 && <tr><td colSpan={4} className="empty-state">Tidak ada barang yang cocok.</td></tr>}</tbody></table></div>{pagination('barang', filtered.length, inventoryPage, inventoryPageCount, setInventoryPage)}<div className="table-footer"><span>Hasil pencarian: <b>{filtered.length}</b> dari <b>{products.length}</b> barang</span><span>● Data live dari Supabase</span></div></section>}
+          {activeNav === 'Barang & Stok' && <section className="panel inventory-panel"><div className="inventory-heading"><div><h2>Daftar barang</h2><p>{loading ? 'Memuat data dari Supabase...' : 'Data barang dari database StokFlow'}</p></div><button className="text-action" onClick={() => loadData()}>Muat ulang <ArrowUpRight size={15} /></button></div><div className="table-tools"><div className="search-field"><Search size={17} /><input placeholder="Cari nama barang, SKU, atau brand..." value={query} onChange={e => { setQuery(e.target.value); setInventoryPage(1) }} />{query && <button onClick={() => setQuery('')}><X size={15} /></button>}</div><button type="button" className={'filter-button ' + (inventoryFilterOpen || inventoryFilterCount > 0 ? 'filter-button-active' : '')} onClick={() => setInventoryFilterOpen(open => !open)} aria-expanded={inventoryFilterOpen}><SlidersHorizontal size={16} /> Filter{inventoryFilterCount > 0 && <span className="filter-count">{inventoryFilterCount}</span>}</button></div>{inventoryFilterOpen && <div className="inventory-filter-panel"><div className="inventory-filter-grid"><label>Brand<select value={inventoryBrandFilter} onChange={e => { setInventoryBrandFilter(e.target.value); setInventoryPage(1) }}><option value="all">Semua brand</option>{inventoryBrands.map(brand => <option key={brand} value={brand}>{brand}</option>)}</select></label><label>Kondisi stok<select value={inventoryStockFilter} onChange={e => { setInventoryStockFilter(e.target.value); setInventoryPage(1) }}><option value="all">Semua kondisi</option><option value="available">Stok tersedia (&gt; 0)</option><option value="empty">Stok kosong / negatif (≤ 0)</option></select></label></div><div className="inventory-filter-actions"><span>{filtered.length.toLocaleString('id-ID')} barang cocok dengan filter</span><button type="button" onClick={() => { setInventoryBrandFilter('all'); setInventoryStockFilter('all'); setInventoryPage(1) }} disabled={inventoryFilterCount === 0}>Reset filter</button><button type="button" className="inventory-filter-done" onClick={() => setInventoryFilterOpen(false)}>Selesai</button></div></div>}<div className="table-scroll"><table><thead><tr><th>BARANG</th><th>STOK</th><th></th></tr></thead><tbody>{visibleProducts.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div className="product-name-stack"><b>{p.name}</b><span>{p.brand}</span></div></div></td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td><button type="button" className="row-more adjust-icon-button" disabled={savingTransaction || loading} onClick={() => openInventoryAdjust(p)} title="Adjust stok" aria-label={`Adjust stok ${p.name}`}><SlidersHorizontal size={16} /></button></td></tr>)}{filtered.length === 0 && <tr><td colSpan={3} className="empty-state">Tidak ada barang yang cocok.</td></tr>}</tbody></table></div>{pagination('barang', filtered.length, inventoryPage, inventoryPageCount, setInventoryPage)}<div className="table-footer"><span>Hasil pencarian: <b>{filtered.length}</b> dari <b>{products.length}</b> barang</span><span>● Data live dari Supabase</span></div></section>}
           <footer className="page-footer"><span>©2026 Toni No BPJS KETENAGAKERJAAN</span></footer>
         </div>
         <nav className="mobile-bottom-nav" aria-label="Navigasi utama">{navItems.map(item => { const Icon = item.icon; const label = item.label === 'Barang & Stok' ? 'Stok' : item.label === 'Penyesuaian Stok' ? 'Koreksi' : item.label === 'Barang Masuk' ? 'Masuk' : item.label === 'Penjualan' ? 'Jual' : item.label; return <button key={item.label} className={'mobile-nav-item ' + (activeNav === item.label ? 'mobile-nav-active' : '')} onClick={() => setActiveNav(item.label)}><Icon size={19} /><span>{label}</span></button> })}</nav>
+        {inventoryAdjustProduct && <div className="adjust-dialog-overlay" onMouseDown={e => { if (e.target === e.currentTarget && !savingTransaction) setInventoryAdjustProduct(null) }}>
+          <section className="adjust-dialog" role="dialog" aria-modal="true" aria-labelledby="adjust-dialog-title">
+            <div className="adjust-dialog-header">
+              <div><span className="adjust-dialog-eyebrow">INVENTORY</span><h2 id="adjust-dialog-title">Adjust jumlah barang</h2><p>Perbarui stok fisik dan simpan ke database.</p></div>
+              <button type="button" className="adjust-dialog-close" onClick={() => setInventoryAdjustProduct(null)} disabled={savingTransaction} aria-label="Tutup"><X size={18} /></button>
+            </div>
+            <div className="adjust-dialog-product"><span className="adjust-dialog-product-icon"><Package size={18} /></span><div><b>{inventoryAdjustProduct.name}</b><span>{inventoryAdjustProduct.brand}</span></div></div>
+            <div className="adjust-dialog-current"><span>Stok sistem saat ini</span><b>{stockAtDate(inventoryAdjustProduct.id, todayLocal()) ?? 'Tidak tersedia'} unit</b></div>
+            <label className="adjust-dialog-field">Jumlah stok fisik
+              <input autoFocus type="number" step="any" value={inventoryAdjustStock} onChange={e => setInventoryAdjustStock(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !savingTransaction) saveInventoryAdjust() }} />
+            </label>
+            <p className="adjust-dialog-note">Jumlah yang dimasukkan adalah stok akhir fisik, bukan selisih.</p>
+            <div className="adjust-dialog-actions"><button type="button" className="adjust-dialog-cancel" onClick={() => setInventoryAdjustProduct(null)} disabled={savingTransaction}>Batal</button><button type="button" className="adjust-dialog-save" onClick={saveInventoryAdjust} disabled={savingTransaction}>{savingTransaction ? 'Menyimpan...' : 'Simpan adjust'}</button></div>
+          </section>
+        </div>}
       </main>
     </div>
   )
