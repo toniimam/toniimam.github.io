@@ -364,7 +364,7 @@ export default function App() {
   }
   const now = new Date()
   const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size
-  const totalStockUnits = products.reduce((sum, p) => sum + Number(p.stock || 0), 0)
+  const totalStockUnits = products.reduce((sum, p) => sum + Math.max(0, Number(p.stock || 0)), 0)
   const monthSales = sales.filter(sale => {
     if (!sale.tanggal_pembelian) return false
     const date = new Date(sale.tanggal_pembelian + 'T00:00:00')
@@ -411,7 +411,7 @@ export default function App() {
   <div className="metric-grid">
     <article className="metric-card"><div className="metric-top"><span>Total jenis barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{products.length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">{activeBrands.toLocaleString('id-ID')} brand terdaftar</span></div></article>
     <article className="metric-card"><div className="metric-top"><span>Barang stok minus</span><div className="metric-icon blue"><Boxes size={19} /></div></div><div className="metric-value">{products.filter(p => p.stock < 0).length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">Saldo negatif, termasuk barang PO</span></div></article>
-    <article className="metric-card"><div className="metric-top"><span>Total barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{totalStockUnits.toLocaleString('id-ID')}<small> unit</small></div><div className="metric-foot"><span className="foot-neutral">Akumulasi unit barang saat ini</span></div></article>
+    <article className="metric-card"><div className="metric-top"><span>Total barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{totalStockUnits.toLocaleString('id-ID')}<small> unit</small></div><div className="metric-foot"><span className="foot-neutral">Jumlah unit stok tersedia saat ini</span></div></article>
   </div>
   <article className="panel activity-panel dashboard-sales-panel">
     <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Jumlah unit terjual per hari.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
