@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, ChevronDown, CircleHelp, Download, LayoutDashboard, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings2, ShoppingCart, SlidersHorizontal, Sparkles, Trash2, TrendingUp, Truck, X } from 'lucide-react'
 
 type Brand = { id: number; nama: string; target_bulanan: number }
-type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; openingStock: number; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
+type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; openingStock: number; startDate: string; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
 type Tx = { id: number; barang_id: number; type: string; qty: number; tanggal?: string; penjualan_id?: number | null }
 type Sale = { id: number; brand: string | null; qty: number | null; harga: number; tanggal_pembelian: string; barang_id: number | null }
 
@@ -95,7 +95,7 @@ export default function App() {
     setLoading(true)
     try {
       const [rawBarang, rawBrand, rawTx, rawSales] = await Promise.all([
-        apiAll('/rest/v1/barang?select=id,nama,stok_awal,brand_id,sku,kategori,harga&order=nama.asc', currentToken),
+        apiAll('/rest/v1/barang?select=id,nama,stok_awal,tanggal_mulai,created_at,brand_id,sku,kategori,harga&order=nama.asc', currentToken),
         apiAll('/rest/v1/brand?select=id,nama,target_bulanan&order=nama.asc', currentToken),
         apiAll('/rest/v1/transaksi?select=id,barang_id,type,qty,tanggal,penjualan_id&order=tanggal.desc', currentToken),
         apiAll('/rest/v1/penjualan?select=id,brand,qty,harga,tanggal_pembelian,barang_id&order=tanggal_pembelian.desc', currentToken),
@@ -103,13 +103,15 @@ export default function App() {
       const brandList: Brand[] = rawBrand || []
       const txList: Tx[] = rawTx || []
       const result: Product[] = (rawBarang || []).map((b: any) => {
-        const movement = txList.filter(t => t.barang_id === b.id).reduce((sum, t) => {
+        const startDate = b.tanggal_mulai || (b.created_at ? new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(b.created_at)) : '')
+        const openingStock = startDate ? (startDate <= todayLocal() ? Number(b.stok_awal || 0) : 0) : Number(b.stok_awal || 0)
+        const movement = txList.filter(t => t.barang_id === b.id && t.tanggal && t.tanggal <= todayLocal() && (!startDate || t.tanggal >= startDate)).reduce((sum, t) => {
           if (t.type === 'masuk' || t.type === 'adjust_masuk') return sum + Number(t.qty)
           if (t.type === 'laku' || t.type === 'adjust_keluar') return sum - Number(t.qty)
           if (t.type === 'adjust') return sum + Number(t.qty)
           return sum
         }, 0)
-        const stock = Number(b.stok_awal || 0) + movement
+        const stock = openingStock + movement
         return {
           id: b.id,
           name: b.nama,
@@ -118,6 +120,7 @@ export default function App() {
           category: b.kategori || 'Belum dikategorikan',
           stock,
           openingStock: Number(b.stok_awal || 0),
+          startDate,
           price: Number(b.harga || 0),
           status: stock === 0 ? 'Habis' : stock <= 10 ? 'Menipis' : 'Aman',
         }
@@ -190,7 +193,8 @@ export default function App() {
   function stockAtDate(productId: number, date: string) {
     const product = products.find(item => item.id === productId)
     if (!product) return null
-    return product.openingStock + transactions.filter(t => t.barang_id === productId && t.tanggal && t.tanggal <= date).reduce((sum, t) => {
+    const openingStock = !product.startDate || product.startDate <= date ? product.openingStock : 0
+    return openingStock + transactions.filter(t => t.barang_id === productId && t.tanggal && t.tanggal <= date && (!product.startDate || t.tanggal >= product.startDate)).reduce((sum, t) => {
       if (t.type === 'masuk' || t.type === 'adjust_masuk') return sum + Number(t.qty || 0)
       if (t.type === 'laku' || t.type === 'adjust_keluar') return sum - Number(t.qty || 0)
       if (t.type === 'adjust') return sum + Number(t.qty || 0)
