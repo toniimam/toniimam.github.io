@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Inspect Penjualan fields
+        run: |
+          echo '--- Stock / forecast context ---'
+          grep -n -E -C 3 'Stok|Perkiraan' src/App.tsx | head -120 || true
       - name: Patch Penjualan only
         run: |
           python3 - <<'PY'
@@ -22,30 +26,25 @@ jobs:
           s = p.read_text()
           original = s
 
-          # 1) Product filter state
           old = "  const [saleProductId, setSaleProductId] = useState('')\n  const [saleQty, setSaleQty] = useState('1')"
           new = "  const [saleProductId, setSaleProductId] = useState('')\n  const [saleProductSearch, setSaleProductSearch] = useState('')\n  const [saleQty, setSaleQty] = useState('1')"
           if old not in s: raise SystemExit('State anchor not found')
           s = s.replace(old, new, 1)
 
-          # 2) Filtered product list for the Penjualan product picker
           anchor = "  const saleBrandResults = useMemo(() => {\n    const q = saleBrand.trim().toLowerCase()\n    return brands.filter(b => !q || b.nama.toLowerCase().includes(q)).slice(0, 8)\n  }, [brands, saleBrand])"
           addition = anchor + "\n\n  const saleProductResults = useMemo(() => {\n    const q = saleProductSearch.trim().toLowerCase()\n    return products.filter(p => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)).slice(0, 10)\n  }, [products, saleProductSearch])"
           if anchor not in s: raise SystemExit('Brand results anchor not found')
           s = s.replace(anchor, addition, 1)
 
-          # 3) Replace the long product select with a searchable input + compact result list.
           pattern = re.compile(r'<label className="sales-field[^>]*">(?:(?!</label>).)*?saleProductId(?:(?!</label>).)*?</label>', re.S)
           matches = pattern.findall(s)
-          if len(matches) != 1:
-              raise SystemExit(f'Product field match count={len(matches)}')
+          if len(matches) != 1: raise SystemExit(f'Product field match count={len(matches)}')
           old_label = matches[0]
           new_label = '''<label className="sales-field sales-field-product"><span>Barang</span>
             <div style={{ position: 'relative' }}>
               <input
                 value={saleProductSearch}
                 placeholder="Cari nama barang / SKU / brand"
-                onFocus={() => setSaleProductSearch(current => current)}
                 onChange={e => { setSaleProductSearch(e.target.value); setSaleProductId('') }}
                 autoComplete="off"
               />
@@ -63,39 +62,32 @@ jobs:
           </label>'''
           s = s.replace(old_label, new_label, 1)
 
-          # 4) Clear product filter after saving.
           old = "      setSalePrice('0')\n      setSaleBrand('')"
           new = "      setSalePrice('0')\n      setSaleProductSearch('')\n      setSaleBrand('')"
           if old not in s: raise SystemExit('Sale reset anchor not found')
           s = s.replace(old, new, 1)
 
-          # 5) Make Harga and Tanggal use equal field classes. Remove helper text under Harga.
           s = s.replace('<label className="sales-field"><span>Harga</span>', '<label className="sales-field sales-field-price"><span>Harga</span>', 1)
           s = s.replace('  <small>Contoh: 1.000.000</small>\n</label>', '</label>', 1)
-          date_pattern = re.compile(r'<label className="sales-field"><span>Tanggal</span>(?:(?!</label>).)*?saleDate(?:(?!</label>).)*?</label>', re.S)
-          date_matches = date_pattern.findall(s)
-          if len(date_matches) == 1:
-              s = s.replace(date_matches[0], date_matches[0].replace('className="sales-field"', 'className="sales-field sales-field-date"', 1), 1)
-          else:
-              raise SystemExit(f'Date field match count={len(date_matches)}')
 
-          # 6) Keep price numeric conversion explicit and dot-formatted.
           old = "const parseRupiahInput = (v: string) => Number(v.replace(/\\./g, '').replace(/\\D/g, '') || 0)"
           new = "const parseRupiahInput = (v: string) => { const digits = String(v).replace(/\\D/g, ''); return digits ? Number(digits) : 0 }"
           if old in s: s = s.replace(old, new, 1)
 
+          # Align the two Penjualan summary values without touching other pages.
+          s = s.replace('<div className="sales-stock-card">', '<div className="sales-stock-card sales-stock-pair">', 1)
+          s = s.replace('<div className="sales-estimate-card">', '<div className="sales-estimate-card sales-stock-pair">', 1)
+
           p.write_text(s)
 
-          # CSS: only Penjualan form styling, appended so existing areas remain untouched.
           css = Path('src/app.css')
           c = css.read_text()
           marker = '/* TEMP_SALES_REFINEMENT */'
           if marker not in c:
-              c += '''\n\n/* TEMP_SALES_REFINEMENT */\n.sales-field-price,.sales-field-date{min-width:0}\n.sales-field-price .sales-input-wrap,.sales-field-date input{width:100%;min-width:0}\n.sales-field-price .sales-input-wrap{height:38px}\n.sales-field-price .sales-input-wrap input{min-width:0}\n.sales-field-date input{height:38px}\n.sales-product-results{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);max-height:230px;overflow:auto;background:#fff;border:1px solid #e5e8f0;border-radius:8px;box-shadow:0 8px 20px rgba(24,33,59,.10);padding:4px}\n.sales-product-results button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;border:0;border-radius:6px;background:#fff;padding:8px 9px;text-align:left;color:#354056}\n.sales-product-results button:hover{background:#f1f5ed}\n.sales-product-results button span{font-size:10px;font-weight:700}\n.sales-product-results button small{font-size:8px;color:#9098aa}\n.sales-field-price small{display:none}\n@media(max-width:700px){.sales-field-price,.sales-field-date{width:100%;min-width:0}.sales-field-price .sales-input-wrap,.sales-field-date input{height:36px}.sales-product-results{max-height:190px}}\n'''
+              c += '''\n\n/* TEMP_SALES_REFINEMENT */\n.sales-field-price{min-width:0}\n.sales-field-price .sales-input-wrap{width:100%;min-width:0;height:38px}\n.sales-field-price .sales-input-wrap input{min-width:0}\n.sales-page input[type="date"]{width:100%;min-width:0;height:38px}\n.sales-product-results{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);max-height:230px;overflow:auto;background:#fff;border:1px solid #e5e8f0;border-radius:8px;box-shadow:0 8px 20px rgba(24,33,59,.10);padding:4px}\n.sales-product-results button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;border:0;border-radius:6px;background:#fff;padding:8px 9px;text-align:left;color:#354056}\n.sales-product-results button:hover{background:#f1f5ed}\n.sales-product-results button span{font-size:10px;font-weight:700}\n.sales-product-results button small{font-size:8px;color:#9098aa}\n.sales-field-price small{display:none}\n.sales-stock-pair{flex:1;min-width:0}\n@media(max-width:700px){.sales-page input[type="date"],.sales-field-price .sales-input-wrap{height:36px}.sales-product-results{max-height:190px}.sales-stock-pair{min-width:0}}\n'''
               css.write_text(c)
 
-          if s == original:
-              raise SystemExit('No App.tsx changes made')
+          if s == original: raise SystemExit('No App.tsx changes made')
           PY
       - name: Commit and trigger deploy
         run: |
