@@ -383,10 +383,6 @@ export default function App() {
   })
   const dashboardSalesMax = Math.max(1, ...dashboardSalesDays.map(d => d.revenue))
   const dashboardSalesRevenue = dashboardSalesDays.reduce((sum, d) => sum + d.revenue, 0)
-  const targetBrands = brandMonthlySales.filter(brand => brand.target > 0)
-  const totalTarget = targetBrands.reduce((sum, brand) => sum + brand.target, 0)
-  const totalAchieved = targetBrands.reduce((sum, brand) => sum + brand.sold, 0)
-  const totalTargetProgress = totalTarget > 0 ? Math.min(100, totalAchieved / totalTarget * 100) : 0
 
   if (!token) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 20, background: '#f5f6fb', fontFamily: 'Inter,system-ui,sans-serif' }}>
