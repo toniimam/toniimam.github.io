@@ -38,6 +38,7 @@ async function apiAll(path: string, currentToken = '') {
 }
 
 const rupiah = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
+const rupiahRingkas = (v: number) => v >= 1000000 ? `${(v / 1000000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} jt` : v >= 1000 ? `${Math.round(v / 1000).toLocaleString('id-ID')} rb` : String(v)
 const todayLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const firstDayOfMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` }
 const navItems = [
@@ -417,7 +418,7 @@ export default function App() {
     <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Total nilai penjualan per hari.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
     <div className="dashboard-sales-summary"><div><span>Total nilai penjualan</span><b>{rupiah(dashboardSalesDays.reduce((sum, d) => sum + d.revenue, 0))}</b></div></div>
     <div className="dashboard-sales-chart">
-      <div className="dashboard-sales-axis">{[1, 0.75, 0.5, 0.25, 0].map((ratio, index) => <span key={index}>{rupiah(Math.round(dashboardSalesMax * ratio))}</span>)}</div>
+      <div className="dashboard-sales-axis">{[1, 0.75, 0.5, 0.25, 0].map((ratio, index) => <span key={index}>{rupiahRingkas(Math.round(dashboardSalesMax * ratio))}</span>)}</div>
       <div className={'dashboard-sales-bars sales-days-' + dashboardSalesRange}>{dashboardSalesDays.map(day => { const value = day.revenue; return <div className="dashboard-sales-day" key={day.key}><div className="dashboard-sales-bar-wrap"><div title={rupiah(value)} className="dashboard-sales-bar" style={{height: Math.max(value ? 5 : 2, value / dashboardSalesMax * 100) + '%'}} /></div><span>{day.label}</span></div> })}</div>
     </div>
   </article>
