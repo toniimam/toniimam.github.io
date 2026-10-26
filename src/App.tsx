@@ -598,7 +598,7 @@ export default function App() {
               </div>
               <div className="sales-form-bottom">
                 <div className="sales-stock-info"><span>Stok tersedia</span><strong>{saleProductId && products.find(p => p.id === Number(saleProductId)) ? `${Number(products.find(p => p.id === Number(saleProductId))?.stock || 0).toLocaleString('id-ID')} unit` : 'Pilih barang dahulu'}</strong>{saleProductId && products.find(p => p.id === Number(saleProductId)) && <small>{products.find(p => p.id === Number(saleProductId))?.brand || 'Tanpa brand'}</small>}</div>
-                <div className="sales-total"><span>Perkiraan total penjualan</span><strong>{rupiah(Math.max(0, Number(saleQty) || 0) * Math.max(0, Number(salePrice) || 0))}</strong></div>
+                <div className="sales-total"><span>Perkiraan total penjualan</span><strong>{rupiah(Math.max(0, Number(saleQty) || 0) * Math.max(0, parseRupiahInput(salePrice)))}</strong></div>
                 <button className="button-primary sales-submit" disabled={savingTransaction || loading || !products.length} onClick={addSale}><ShoppingCart size={16}/>{savingTransaction ? 'Menyimpan...' : 'Simpan penjualan'}</button>
               </div>
             </div>
