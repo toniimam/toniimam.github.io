@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowUpRight, Bell, Boxes, LayoutDashboard, LogOut, Package, Pencil, Search, ShoppingCart, SlidersHorizontal, Sparkles, Trash2, TrendingUp, Truck, X } from 'lucide-react'
+import { Activity, ArrowUpRight, Bell, Boxes, LayoutDashboard, LogOut, Package, Pencil, Search, ShoppingCart, SlidersHorizontal, Trash2, TrendingUp, Truck, X } from 'lucide-react'
 
 type Brand = { id: number; nama: string; target_bulanan: number }
 type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; openingStock: number; startDate: string; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
