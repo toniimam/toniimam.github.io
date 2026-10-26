@@ -458,24 +458,32 @@ export default function App() {
             </div>
             <div className="dashboard-note"><Sparkles size={16}/><span>Ringkasan dari Supabase saat data dimuat. Halaman <b>Barang &amp; Stok</b> khusus untuk pencarian dan tabel barang.</span><button onClick={() => loadData()} disabled={loading}>{loading ? 'Memuat...' : 'Perbarui data'}</button></div>
           </section>}
-          {activeNav === 'Penjualan' && <section className="panel inventory-panel" style={{ padding: 20 }}>
-            <div className="inventory-heading"><div><h2>Catat penjualan</h2><p>Penjualan dan pengurangan stok tersimpan bersama dalam satu transaksi database.</p></div><span className="demo-pill">{sales.length.toLocaleString('id-ID')} DATA</span></div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12, margin: '18px 0 24px' }}>
-              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Barang
-                <select value={saleProductId} onChange={e => { const id = e.target.value; setSaleProductId(id); const item = products.find(p => p.id === Number(id)); if (item) setSalePrice(String(item.price)) }} style={{ minWidth: 0, padding: 11, border: '1px solid #dfe2eb', borderRadius: 9, background: '#fff' }}>
-                  <option value="">Pilih barang</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} · {p.brand}</option>)}
-                </select>
-              </label>
-              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Jumlah (unit)
-                <input type="number" min="1" step="1" value={saleQty} onChange={e => setSaleQty(e.target.value)} />
-              </label>
-              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Harga jual per unit (Rp)
-                <input type="number" min="0" step="100" value={salePrice} onChange={e => setSalePrice(e.target.value)} />
-              </label>
-              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Tanggal penjualan
-                <input type="date" value={saleDate} max={todayLocal()} onChange={e => setSaleDate(e.target.value)} />
-              </label>
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'end', gap: 7 }}><span style={{ color: '#747b8d', fontSize: 12 }}>Total penjualan</span><b style={{ fontSize: 18 }}>{rupiah(Math.max(0, Number(saleQty) || 0) * Math.max(0, Number(salePrice) || 0))}</b><button className="button-primary" disabled={savingTransaction || loading} onClick={addSale}>{savingTransaction ? 'Menyimpan...' : 'Simpan penjualan'}</button></div>
+          {activeNav === 'Penjualan' && <section className="panel inventory-panel sales-page">
+            <div className="inventory-heading sales-page-heading"><div><h2>Catat penjualan</h2><p>Isi barang, jumlah, harga, dan tanggal. Stok diperbarui otomatis saat disimpan.</p></div><span className="sales-count">{sales.length.toLocaleString('id-ID')} transaksi</span></div>
+            <div className="sales-form-card">
+              <div className="sales-form-grid">
+                <label className="sales-field sales-field-product"><span>Barang yang dijual</span>
+                  <select value={saleProductId} onChange={e => { const id = e.target.value; setSaleProductId(id); const item = products.find(p => p.id === Number(id)); if (item) setSalePrice(String(item.price)) }}>
+                    <option value="">Pilih nama barang</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} · {p.brand}</option>)}
+                  </select>
+                  <small>Pilih barang dari daftar stok.</small>
+                </label>
+                <label className="sales-field"><span>Jumlah terjual</span>
+                  <div className="sales-input-wrap"><input type="number" min="1" step="1" inputMode="numeric" value={saleQty} onChange={e => setSaleQty(e.target.value)} /><small>unit</small></div>
+                </label>
+                <label className="sales-field"><span>Harga jual per unit</span>
+                  <div className="sales-input-wrap sales-price-input"><small>Rp</small><input type="number" min="0" step="100" inputMode="numeric" value={salePrice} onChange={e => setSalePrice(e.target.value)} /></div>
+                  <small>Harga dapat disesuaikan untuk transaksi ini.</small>
+                </label>
+                <label className="sales-field"><span>Tanggal penjualan</span>
+                  <input type="date" value={saleDate} max={todayLocal()} onChange={e => setSaleDate(e.target.value)} />
+                </label>
+              </div>
+              <div className="sales-form-bottom">
+                <div className="sales-stock-info"><span>Stok tersedia</span><strong>{saleProductId && products.find(p => p.id === Number(saleProductId)) ? `${Number(products.find(p => p.id === Number(saleProductId))?.stock || 0).toLocaleString('id-ID')} unit` : 'Pilih barang dahulu'}</strong>{saleProductId && products.find(p => p.id === Number(saleProductId)) && <small>{products.find(p => p.id === Number(saleProductId))?.brand || 'Tanpa brand'}</small>}</div>
+                <div className="sales-total"><span>Perkiraan total penjualan</span><strong>{rupiah(Math.max(0, Number(saleQty) || 0) * Math.max(0, Number(salePrice) || 0))}</strong></div>
+                <button className="button-primary sales-submit" disabled={savingTransaction || loading || !products.length} onClick={addSale}><ShoppingCart size={16}/>{savingTransaction ? 'Menyimpan...' : 'Simpan penjualan'}</button>
+              </div>
             </div>
             {editingSaleId !== null && <div className="panel" style={{ padding: 16, margin: '8px 0 20px', border: '1px solid #dfe2eb' }}>
               <div className="inventory-heading"><div><h2>Edit penjualan #{editingSaleId}</h2><p>Barang tetap, perubahan jumlah dan tanggal akan memperbarui transaksi stok terkait.</p></div><button className="text-action" onClick={() => setEditingSaleId(null)} disabled={savingTransaction}>Batal <X size={15} /></button></div>
@@ -487,7 +495,7 @@ export default function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'end', gap: 7 }}><b style={{ fontSize: 16 }}>{rupiah(Math.max(0, Number(editSaleQty) || 0) * Math.max(0, Number(editSalePrice) || 0))}</b><button className="button-primary" disabled={savingTransaction || loading} onClick={saveEditedSale}>{savingTransaction ? 'Menyimpan...' : 'Simpan perubahan'}</button></div>
               </div>
             </div>}
-            <div className="inventory-heading"><div><h2>Riwayat penjualan</h2><p>20 catatan terbaru, harga menggunakan nilai transaksi tersimpan.</p></div><button className="text-action" onClick={() => loadData()} disabled={loading}>Muat ulang <ArrowUpRight size={15} /></button></div>
+            <div className="inventory-heading"><div><h2>Riwayat penjualan</h2><p>Riwayat transaksi, harga sesuai nilai yang tersimpan saat penjualan.</p></div><button className="text-action" onClick={() => loadData()} disabled={loading}>Muat ulang <ArrowUpRight size={15} /></button></div>
             <div className="table-scroll"><table><thead><tr><th>TANGGAL</th><th>BARANG</th><th>BRAND</th><th>QTY</th><th>HARGA / UNIT</th><th>TOTAL</th><th>AKSI</th></tr></thead><tbody>{visibleSales.map(sale => <tr key={sale.id}><td>{new Date(sale.tanggal_pembelian + 'T00:00:00').toLocaleDateString('id-ID')}</td><td>{products.find(p => p.id === sale.barang_id)?.name || 'Barang tidak ditemukan'}</td><td>{sale.brand || 'Tanpa brand'}</td><td>{Number(sale.qty || 0).toLocaleString('id-ID')}</td><td>{rupiah(sale.harga)}</td><td className="price-cell">{rupiah(Number(sale.qty || 0) * sale.harga)}</td><td><div style={{ display: 'flex', gap: 6 }}><button className="text-action" title="Edit penjualan" disabled={savingTransaction} onClick={() => beginEditSale(sale)}><Pencil size={15} /></button><button className="text-action" title="Hapus penjualan" disabled={savingTransaction} onClick={() => deleteSale(sale)} style={{ color: '#c43d4b' }}><Trash2 size={15} /></button></div></td></tr>)}{sales.length === 0 && <tr><td colSpan={7} className="empty-state">Belum ada data penjualan.</td></tr>}</tbody></table></div>{pagination('penjualan', sortedSales.length, salesPage, salesPageCount, setSalesPage)}
           </section>}
 
