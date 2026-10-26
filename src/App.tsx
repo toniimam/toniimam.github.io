@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, ChevronDown, CircleHelp, Download, LayoutDashboard, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings2, ShoppingCart, SlidersHorizontal, Sparkles, Trash2, TrendingUp, Truck, X } from 'lucide-react'
+import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, LayoutDashboard, LogOut, MoreHorizontal, Package, Pencil, Search, ShoppingCart, SlidersHorizontal, Sparkles, Trash2, TrendingUp, Truck, X } from 'lucide-react'
 
 type Brand = { id: number; nama: string; target_bulanan: number }
 type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; openingStock: number; startDate: string; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
@@ -61,13 +61,6 @@ export default function App() {
   const [targetDrafts, setTargetDrafts] = useState<Record<number, string>>({})
   const [activeNav, setActiveNav] = useState('Dashboard')
   const [query, setQuery] = useState('')
-  const [showAdd, setShowAdd] = useState(false)
-  const [mobileNav, setMobileNav] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [newBrand, setNewBrand] = useState('')
-  const [newStock, setNewStock] = useState('0')
-  const [newCategory, setNewCategory] = useState('Belum dikategorikan')
-  const [newPrice, setNewPrice] = useState('0')
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
@@ -176,23 +169,6 @@ export default function App() {
     }
   }
 
-  async function addProduct() {
-    if (!newName.trim() || !newBrand.trim()) { setNotice('Isi nama barang dan brand terlebih dahulu.'); return }
-    try {
-      const brandName = newBrand.trim()
-      let brand = brands.find(b => b.nama.toLowerCase() === brandName.toLowerCase())
-      if (!brand) {
-        const created = await api('/rest/v1/brand', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ nama: brandName, aktif: true }) }, token)
-        brand = created[0]
-      }
-      if (!brand) throw new Error('Brand gagal dibuat atau tidak dikembalikan oleh database.')
-      const sku = `STK-${Date.now()}`
-      await api('/rest/v1/barang', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ nama: newName.trim(), stok_awal: Math.max(0, Number(newStock) || 0), brand_id: brand.id, sku, kategori: newCategory.trim() || 'Belum dikategorikan', harga: Math.max(0, Number(newPrice) || 0) }) }, token)
-      setShowAdd(false); setNewName(''); setNewBrand(''); setNewStock('0'); setNewCategory('Belum dikategorikan'); setNewPrice('0')
-      await loadData(token)
-      setNotice('Barang berhasil disimpan ke Supabase.')
-    } catch (e: any) { setNotice(`Gagal menyimpan barang: ${e.message}`) }
-  }
 
   function stockAtDate(productId: number, date: string) {
     const product = products.find(item => item.id === productId)
@@ -329,12 +305,6 @@ export default function App() {
   }
 
   function logout() { localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail(''); clearAppData() }
-  function exportCsv() {
-    const rows = [['Nama Barang', 'SKU', 'Brand', 'Kategori', 'Stok', 'Harga'], ...products.map(p => [p.name, p.sku, p.brand, p.category, String(p.stock), String(p.price)])]
-    const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n')
-    const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })); const a = document.createElement('a'); a.href = url; a.download = 'stokflow-barang.csv'; a.click(); URL.revokeObjectURL(url)
-  }
-
   const filtered = useMemo(() => products.filter(p => [p.name, p.sku, p.brand, p.category].some(v => v.toLowerCase().includes(query.toLowerCase()))), [products, query])
   const pageSize = 7
   const sortedSales = useMemo(() => [...sales].sort((a,b) => b.tanggal_pembelian.localeCompare(a.tanggal_pembelian) || b.id-a.id), [sales])
@@ -378,26 +348,6 @@ export default function App() {
       </div>
     </div>
   }
-  function exportReportCsv() {
-    const rows: (string | number)[][] = [
-      ['Laporan Penjualan StokFlow'],
-      ['Periode', reportStartDate || 'Semua tanggal', reportEndDate || 'Semua tanggal'],
-      ['Filter brand', reportBrand === 'all' ? 'Semua brand' : reportBrand],
-      [],
-      ['Ringkasan per brand'],
-      ['Brand', 'Jumlah transaksi', 'Qty terjual', 'Omzet (Rp)'],
-      ...reportByBrand.map(row => [row.brand, row.transactions, row.qty, row.revenue]),
-      [],
-      ['Detail penjualan'],
-      ['Tanggal', 'Barang', 'Brand', 'Qty', 'Harga per unit (Rp)', 'Total (Rp)'],
-      ...reportSales.map(sale => [sale.tanggal_pembelian, products.find(p => p.id === sale.barang_id)?.name || 'Barang tidak ditemukan', sale.brand || 'Tanpa brand', Number(sale.qty || 0), Number(sale.harga || 0), Number(sale.qty || 0) * Number(sale.harga || 0)]),
-    ]
-    const csv = rows.map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join(String.fromCharCode(10))
-    const url = URL.createObjectURL(new Blob([String.fromCharCode(0xfeff) + csv], { type: 'text/csv;charset=utf-8;' }))
-    const a = document.createElement('a'); a.href = url; a.download = 'stokflow-laporan-penjualan.csv'; a.click(); URL.revokeObjectURL(url)
-  }
-
-  const totalStock = products.reduce((s, p) => s + p.stock, 0)
   const lowStock = products.filter(p => p.stock > 0 && p.stock <= 10).length
   const outStock = products.filter(p => p.stock <= 0).length
 
@@ -442,26 +392,26 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {mobileNav && <button className="mobile-scrim" aria-label="Tutup menu" onClick={() => setMobileNav(false)} />}
-      <aside className={'sidebar ' + (mobileNav ? 'sidebar-open' : '')}>
-        <div className="brand-lockup"><div className="brand-mark"><Boxes size={22} /></div><div><strong>stokflow</strong><span>INVENTORY SYSTEM</span></div><button className="close-menu" onClick={() => setMobileNav(false)}><X size={18} /></button></div>
-        <div className="workspace-label">WORKSPACE</div><button className="workspace"><div className="workspace-avatar">DH</div><div><b>D’House Outlet</b><span>Supabase aktif</span></div><ChevronDown size={16} /></button>
-        <div className="nav-label">MENU UTAMA</div><nav>{navItems.map(item => { const Icon = item.icon; return <button key={item.label} className={'nav-item ' + (activeNav === item.label ? 'nav-active' : '')} onClick={() => { setActiveNav(item.label); setMobileNav(false) }}><Icon size={18} /><span>{item.label}</span>{item.label === 'Barang & Stok' && <span className="nav-count">{products.length}</span>}</button> })}</nav>
-        <div className="sidebar-bottom"><div className="help-card"><div className="help-icon"><CircleHelp size={18} /></div><b>Database terhubung</b><p>Data StokFlow sekarang dibaca langsung dari Supabase.</p></div><button className="nav-item settings" onClick={logout}><Settings2 size={18} /><span>Keluar</span></button><div className="profile"><div className="profile-avatar">{email.slice(0, 2).toUpperCase()}</div><div><b>Administrator</b><span>{email}</span></div><MoreHorizontal size={19} /></div></div>
-      </aside>
       <main className="main-area">
-        <header className="topbar"><button className="mobile-menu" onClick={() => setMobileNav(true)}><Menu size={21} /></button><div className="breadcrumb">Workspace <span>/</span> <b>{activeNav}</b></div><div className="top-actions"><div className="system-status"><span /> Supabase aktif</div><button className="icon-button" onClick={() => setNotice('Database tersambung dan data sudah dimuat.')}><Bell size={19} /></button><div className="top-avatar">{email.slice(0, 2).toUpperCase()}</div></div></header>
+        <header className="topbar">
+          <div className="brand-lockup"><div className="brand-mark"><Boxes size={22} /></div><div><strong>stokflow</strong><span>INVENTORY SYSTEM</span></div></div>
+          <div className="top-actions"><div className="system-status"><span /> Supabase aktif</div><button className="icon-button" title="Status database" onClick={() => setNotice('Database tersambung dan data sudah dimuat.')}><Bell size={19} /></button><div className="top-avatar" title={email}>{email.slice(0, 2).toUpperCase()}</div><button className="logout-button" onClick={logout}><LogOut size={16} /><span>Keluar</span></button></div>
+        </header>
+        <nav className="desktop-nav" aria-label="Navigasi utama">{navItems.map(item => { const Icon = item.icon; return <button key={item.label} className={'nav-item ' + (activeNav === item.label ? 'nav-active' : '')} onClick={() => setActiveNav(item.label)}><Icon size={17} /><span>{item.label}</span>{item.label === 'Barang & Stok' && <span className="nav-count">{products.length}</span>}</button> })}</nav>
         <div className="content">
-          <div className="welcome-row"><div><div className="eyebrow"><Sparkles size={14} /> DATABASE STOKFLOW</div><h1>{activeNav}</h1><p>Data inventaris langsung dari Supabase, bukan data demo.</p></div><div className="welcome-actions"><button className="button-secondary" onClick={exportCsv}><Download size={16} /> Ekspor data</button><button className="button-primary" onClick={() => setShowAdd(true)}><Plus size={17} /> Tambah barang</button></div></div>
+          <div className="welcome-row"><div><div className="eyebrow"><Sparkles size={14} /> DATABASE STOKFLOW</div><h1>{activeNav}</h1><p>Data inventaris langsung dari Supabase, bukan data demo.</p></div></div>
           {notice && <div className="demo-alert"><div className="alert-symbol"><Activity size={17} /></div><div><b>Status</b><span>{notice}</span></div><button onClick={() => setNotice('')} style={{ marginLeft: 'auto', border: 0, background: 'transparent', cursor: 'pointer' }}><X size={16} /></button></div>}
-          {showAdd && <section className="panel" style={{ marginBottom: 18, padding: 20 }}><div className="panel-heading"><div><h2>Tambah barang</h2><p>Data akan langsung disimpan ke Supabase.</p></div><button className="more-button" onClick={() => setShowAdd(false)}><X size={20} /></button></div><div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}><input placeholder="Nama barang" value={newName} onChange={e => setNewName(e.target.value)} /><input placeholder="Brand" value={newBrand} onChange={e => setNewBrand(e.target.value)} /><input placeholder="Kategori" value={newCategory} onChange={e => setNewCategory(e.target.value)} /><input type="number" min="0" placeholder="Stok awal" value={newStock} onChange={e => setNewStock(e.target.value)} /><input type="number" min="0" placeholder="Harga" value={newPrice} onChange={e => setNewPrice(e.target.value)} /><button className="button-primary" onClick={addProduct}>Simpan ke database</button></div></section>}
           {activeNav === 'Dashboard' && <section className="dashboard-overview">
             <div className="metric-grid">
               <article className="metric-card"><div className="metric-top"><span>Total jenis barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{products.length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">{activeBrands.toLocaleString('id-ID')} brand terdaftar</span></div></article>
-              <article className="metric-card"><div className="metric-top"><span>Total unit tersedia</span><div className="metric-icon blue"><Boxes size={19} /></div></div><div className="metric-value">{totalStock.toLocaleString('id-ID')}<small> unit</small></div><div className="metric-foot"><span className="foot-neutral">Akumulasi stok saat ini</span></div></article>
+              <article className="metric-card"><div className="metric-top"><span>Barang stok minus</span><div className="metric-icon blue"><Boxes size={19} /></div></div><div className="metric-value">{products.filter(p => p.stock < 0).length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">Saldo negatif, termasuk barang PO</span></div></article>
               <article className="metric-card"><div className="metric-top"><span>Nilai estimasi stok</span><div className="metric-icon purple"><TrendingUp size={19} /></div></div><div className="metric-value" style={{fontSize: inventoryValue >= 1000000000 ? 20 : 23}}>{rupiah(inventoryValue)}</div><div className="metric-foot"><span className="foot-neutral">Berdasarkan harga per unit</span></div></article>
               <article className="metric-card"><div className="metric-top"><span>Perlu pengadaan</span><div className="metric-icon red"><Bell size={19} /></div></div><div className="metric-value">{(lowStock + outStock).toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className={outStock ? 'foot-danger' : 'foot-warning'}>{outStock.toLocaleString('id-ID')} habis, {lowStock.toLocaleString('id-ID')} menipis</span></div></article>
             </div>
+            <article className="panel dashboard-stock-panel">
+              <div className="panel-heading"><div><h2>Stok aktual per barang</h2><p>10 barang dengan saldo terendah. Saldo minus tetap ditampilkan untuk barang yang masih PO.</p></div><span className="demo-pill">10 BARANG</span></div>
+              <div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>STOK AKTUAL</th><th>STATUS</th></tr></thead><tbody>{[...products].sort((a, b) => a.stock - b.stock || a.name.localeCompare(b.name)).slice(0, 10).map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock.toLocaleString('id-ID')}</b><span className="unit-label"> unit</span></td><td><span className={'status-badge ' + (p.stock < 0 ? 'status-out' : p.stock === 0 ? 'status-out' : p.stock <= 10 ? 'status-low' : 'status-safe')}><i />{p.stock < 0 ? 'Minus / PO' : p.stock === 0 ? 'Habis' : p.stock <= 10 ? 'Menipis' : 'Aman'}</span></td></tr>)}{products.length === 0 && <tr><td colSpan={4} className="empty-state">Belum ada data stok.</td></tr>}</tbody></table></div>
+            </article>
             <article className="panel brand-target-panel">
               <div className="panel-heading"><div><h2>Brand &amp; target penjualan</h2><p>Realisasi omzet bulan ini dibanding target Rupiah</p></div><span className="demo-pill">{brands.length} BRAND</span></div><p className="brand-target-note">Omzet dihitung dari jumlah terjual × harga yang tercatat pada transaksi penjualan.</p>
               <div className="brand-target-grid">{brandMonthlySales.map(brand => <div className="brand-target-item" key={brand.id}>
@@ -552,7 +502,7 @@ export default function App() {
           </section>}
 
           {activeNav === 'Laporan' && <section className="panel inventory-panel" style={{ padding: 20 }}>
-            <div className="inventory-heading"><div><h2>Laporan penjualan</h2><p>Ringkasan omzet lintas brand berdasarkan harga yang tersimpan pada transaksi.</p></div><button className="button-primary" onClick={exportReportCsv}><Download size={16} /> Ekspor laporan CSV</button></div>
+            <div className="inventory-heading"><div><h2>Laporan penjualan</h2><p>Ringkasan omzet lintas brand berdasarkan harga yang tersimpan pada transaksi.</p></div></div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 12, margin: '18px 0' }}>
               <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Dari tanggal<input type="date" value={reportStartDate} max={reportEndDate || undefined} onChange={e => { setReportStartDate(e.target.value); setReportPage(1) }} /></label>
               <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Sampai tanggal<input type="date" value={reportEndDate} min={reportStartDate || undefined} max={todayLocal()} onChange={e => { setReportEndDate(e.target.value); setReportPage(1) }} /></label>
@@ -589,6 +539,7 @@ export default function App() {
           {activeNav === 'Barang & Stok' && <section className="panel inventory-panel"><div className="inventory-heading"><div><h2>Daftar barang</h2><p>{loading ? 'Memuat data dari Supabase...' : 'Data barang dari database StokFlow'}</p></div><button className="text-action" onClick={() => loadData()}>Muat ulang <ArrowUpRight size={15} /></button></div><div className="table-tools"><div className="search-field"><Search size={17} /><input placeholder="Cari nama barang, SKU, atau brand..." value={query} onChange={e => { setQuery(e.target.value); setInventoryPage(1) }} />{query && <button onClick={() => setQuery('')}><X size={15} /></button>}</div><button className="filter-button" onClick={() => setNotice('Filter lanjutan kita aktifkan pada tahap berikutnya.')}><SlidersHorizontal size={16} /> Filter</button></div><div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>KATEGORI</th><th>STOK</th><th>HARGA / UNIT</th><th>STATUS</th><th></th></tr></thead><tbody>{visibleProducts.map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td className="muted-cell">{p.category}</td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock}</b><span className="unit-label"> unit</span></td><td className="price-cell">{p.price ? rupiah(p.price) : 'Belum diatur'}</td><td><span className={'status-badge ' + (p.status === 'Aman' ? 'status-safe' : p.status === 'Menipis' ? 'status-low' : 'status-out')}><i />{p.status}</span></td><td><button className="row-more"><MoreHorizontal size={18} /></button></td></tr>)}{filtered.length === 0 && <tr><td colSpan={7} className="empty-state">Tidak ada barang yang cocok.</td></tr>}</tbody></table></div>{pagination('barang', filtered.length, inventoryPage, inventoryPageCount, setInventoryPage)}<div className="table-footer"><span>Hasil pencarian: <b>{filtered.length}</b> dari <b>{products.length}</b> barang</span><span>● Data live dari Supabase</span></div></section>}
           <footer className="page-footer"><span>© 2026 StokFlow <span>·</span> Inventory made clearer.</span><span><i /> Database aktif</span></footer>
         </div>
+        <nav className="mobile-bottom-nav" aria-label="Navigasi utama">{navItems.map(item => { const Icon = item.icon; return <button key={item.label} className={'mobile-nav-item ' + (activeNav === item.label ? 'mobile-nav-active' : '')} onClick={() => setActiveNav(item.label)}><Icon size={19} /><span>{item.label}</span></button> })}</nav>
       </main>
     </div>
   )
