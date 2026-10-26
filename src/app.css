@@ -345,3 +345,18 @@ body{background:#f5f7f1}
   .sales-page .sales-page-heading{margin-bottom:8px}
   .sales-page .sales-count{font-size:9px;padding:6px 7px}
 }
+
+
+/* TEMP_SALES_REFINEMENT */
+.sales-field-price{min-width:0}
+.sales-field-price .sales-input-wrap{width:100%;min-width:0;height:38px}
+.sales-field-price .sales-input-wrap input{min-width:0}
+.sales-page input[type="date"]{width:100%;min-width:0;height:38px}
+.sales-product-results{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);max-height:230px;overflow:auto;background:#fff;border:1px solid #e5e8f0;border-radius:8px;box-shadow:0 8px 20px rgba(24,33,59,.10);padding:4px}
+.sales-product-results button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;border:0;border-radius:6px;background:#fff;padding:8px 9px;text-align:left;color:#354056}
+.sales-product-results button:hover{background:#f1f5ed}
+.sales-product-results button span{font-size:10px;font-weight:700}
+.sales-product-results button small{font-size:8px;color:#9098aa}
+.sales-field-price small{display:none}
+.sales-stock-pair{flex:1;min-width:0}
+@media(max-width:700px){.sales-page input[type="date"],.sales-field-price .sales-input-wrap{height:36px}.sales-product-results{max-height:190px}.sales-stock-pair{min-width:0}}

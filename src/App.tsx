@@ -39,7 +39,7 @@ async function apiAll(path: string, currentToken = '') {
 
 const rupiah = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
 const formatRupiahInput = (v: string) => { const digits = v.replace(/\D/g, ''); return digits ? Number(digits).toLocaleString('id-ID') : '0' }
-const parseRupiahInput = (v: string) => Number(v.replace(/\./g, '').replace(/\D/g, '') || 0)
+const parseRupiahInput = (v: string) => { const digits = String(v).replace(/\D/g, ''); return digits ? Number(digits) : 0 }
 const rupiahRingkas = (v: number) => v >= 1000000 ? `${(v / 1000000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} jt` : v >= 1000 ? `${Math.round(v / 1000).toLocaleString('id-ID')} rb` : String(v)
 const todayLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const firstDayOfMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` }
@@ -73,6 +73,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
   const [saleProductId, setSaleProductId] = useState('')
+  const [saleProductSearch, setSaleProductSearch] = useState('')
   const [saleQty, setSaleQty] = useState('1')
   const [salePrice, setSalePrice] = useState('0')
   const [saleDate, setSaleDate] = useState(todayLocal())
@@ -255,6 +256,7 @@ export default function App() {
       await loadData(token)
       setSaleQty('1')
       setSalePrice('0')
+      setSaleProductSearch('')
       setSaleBrand('')
       setSaleBrandOpen(false)
       setNotice('Penjualan tersimpan. Catatan penjualan dan pergerakan stok dicatat dalam satu transaksi database.')
@@ -425,6 +427,11 @@ export default function App() {
     const q = saleBrand.trim().toLowerCase()
     return brands.filter(b => !q || b.nama.toLowerCase().includes(q)).slice(0, 8)
   }, [brands, saleBrand])
+
+  const saleProductResults = useMemo(() => {
+    const q = saleProductSearch.trim().toLowerCase()
+    return products.filter(p => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)).slice(0, 10)
+  }, [products, saleProductSearch])
   const incomingSearchResults = useMemo(() => {
     const q = incomingSearch.trim().toLowerCase()
     if (q.length < 2) return []
@@ -546,12 +553,26 @@ export default function App() {
             <div className="inventory-heading sales-page-heading"><div><h2>Catat penjualan</h2><p>Isi barang, jumlah, harga, dan tanggal. Stok diperbarui otomatis saat disimpan.</p></div><span className="sales-count">{sales.length.toLocaleString('id-ID')} transaksi</span></div>
             <div className="sales-form-card">
               <div className="sales-form-grid">
-                <label className="sales-field sales-field-product"><span>Barang yang dijual</span>
-                  <select value={saleProductId} onChange={e => { const id = e.target.value; setSaleProductId(id); const item = products.find(p => p.id === Number(id)); if (item) { setSalePrice(formatRupiahInput(String(item.price))); setSaleBrand(item.brand === 'Tanpa brand' ? '' : item.brand) } }}>
-                    <option value="">Pilih nama barang</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} · {p.brand}</option>)}
-                  </select>
-                  <small>Pilih barang dari daftar stok.</small>
-                </label>
+                <label className="sales-field sales-field-product"><span>Barang</span>
+  <div style={{ position: 'relative' }}>
+    <input
+      value={saleProductSearch}
+      placeholder="Cari nama barang / SKU / brand"
+      onChange={e => { setSaleProductSearch(e.target.value); setSaleProductId('') }}
+      autoComplete="off"
+    />
+    {saleProductSearch.trim() && saleProductResults.length > 0 && <div className="sales-product-results">
+      {saleProductResults.map(product => <button key={product.id} type="button" onMouseDown={e => e.preventDefault()} onClick={() => {
+        setSaleProductId(String(product.id))
+        setSaleProductSearch(product.name)
+        setSalePrice(formatRupiahInput(String(product.price)))
+        setSaleBrand(product.brand === 'Tanpa brand' ? '' : product.brand)
+      }}>
+        <span>{product.name}</span><small>{product.sku} · {product.brand}</small>
+      </button>)}
+    </div>}
+  </div>
+</label>
                 <label className="sales-field sales-field-brand"><span>Brand</span>
                   <div style={{ position: 'relative' }}>
                     <input value={saleBrand} placeholder="Ketik nama brand" onFocus={() => setSaleBrandOpen(true)} onChange={e => { setSaleBrand(e.target.value); setSaleBrandOpen(true) }} onBlur={() => window.setTimeout(() => setSaleBrandOpen(false), 150)} autoComplete="off" />
@@ -567,7 +588,7 @@ export default function App() {
                     <button type="button" aria-label="Tambah quantity" onClick={() => setSaleQty(String((Number(saleQty) || 1) + 1))} style={{ height: 39, border: 0, background: '#f1f5ed', color: '#526f52', fontSize: 20, lineHeight: 1 }}>+</button>
                   </div>
                 </label>
-                <label className="sales-field"><span>Harga</span>
+                <label className="sales-field sales-field-price"><span>Harga</span>
                   <div className="sales-input-wrap sales-price-input"><small>Rp</small><input type="text" inputMode="numeric" value={salePrice} onChange={e => setSalePrice(formatRupiahInput(e.target.value))} /></div>
                   <small>Contoh: 1.000.000</small>
                 </label>
