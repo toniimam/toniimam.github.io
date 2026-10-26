@@ -365,7 +365,7 @@ export default function App() {
   }
   const now = new Date()
   const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size
-  const totalStockUnits = products.reduce((sum, p) => sum + Math.max(0, Number(p.stock || 0)), 0)
+  const totalStockUnits = products.reduce((sum, p) => sum + Number(p.stock || 0), 0)
   const monthSales = sales.filter(sale => {
     if (!sale.tanggal_pembelian) return false
     const date = new Date(sale.tanggal_pembelian + 'T00:00:00')
