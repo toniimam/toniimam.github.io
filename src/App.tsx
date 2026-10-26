@@ -499,7 +499,7 @@ export default function App() {
         </header>
         <nav className="desktop-nav" aria-label="Navigasi utama">{navItems.map(item => { const Icon = item.icon; return <button key={item.label} className={'nav-item ' + (activeNav === item.label ? 'nav-active' : '')} onClick={() => setActiveNav(item.label)}><Icon size={17} /><span>{item.label}</span>{item.label === 'Barang & Stok' && <span className="nav-count">{products.length}</span>}</button> })}</nav>
         <div className="content">
-          <div className="welcome-row"><div><div className="eyebrow"><Sparkles size={14} /> DATABASE STOKFLOW</div><h1>{activeNav}</h1><p>Ringkasan stok dan penjualan untuk memantau performa toko.</p></div></div>
+          <div className="welcome-row"><div><h1>{activeNav}</h1><p>Ringkasan stok dan penjualan untuk memantau performa toko.</p></div></div>
           {notice && <div className="toast" role="status"><span className="toast-check">✓</span><span>{notice}</span><button aria-label="Tutup pemberitahuan" onClick={() => setNotice('')}><X size={15} /></button></div>}
           {activeNav === 'Dashboard' && <section className="dashboard-overview">
   <div className="metric-grid">
