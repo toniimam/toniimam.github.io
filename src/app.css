@@ -259,3 +259,34 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;background
 @keyframes adjust-overlay-in{from{opacity:0}to{opacity:1}}
 @keyframes adjust-dialog-in{from{opacity:0;transform:translateY(4px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:600px){.adjust-dialog{padding:18px;border-radius:12px}.adjust-dialog-header h2{font-size:17px}.adjust-dialog-actions button{min-height:40px}.adjust-dialog-overlay{align-items:center;padding:14px}}
+
+/* Compact only the Barang & Stok table so it fits mobile screens */
+.inventory-panel .table-scroll{width:100%;min-width:0;overflow-x:hidden}
+.inventory-panel .table-scroll table{width:100%;table-layout:fixed;white-space:normal}
+.inventory-panel .table-scroll th,.inventory-panel .table-scroll td{padding:9px 8px}
+.inventory-panel .table-scroll th:first-child,.inventory-panel .table-scroll td:first-child{padding-left:12px}
+.inventory-panel .table-scroll th:last-child,.inventory-panel .table-scroll td:last-child{padding-right:10px}
+.inventory-panel .table-scroll th:nth-child(2),.inventory-panel .table-scroll td:nth-child(2){width:76px}
+.inventory-panel .table-scroll th:nth-child(3),.inventory-panel .table-scroll td:nth-child(3){width:48px;text-align:center}
+.inventory-panel .product-cell{gap:8px;min-width:0}
+.inventory-panel .product-icon{width:29px;height:29px;flex:0 0 29px}
+.inventory-panel .product-name-stack{min-width:0;overflow-wrap:anywhere}
+.inventory-panel .product-name-stack b{font-size:11px;overflow-wrap:anywhere;word-break:normal}
+.inventory-panel .product-name-stack span{font-size:9px;overflow-wrap:anywhere}
+.inventory-panel .unit-label{font-size:8px}
+.inventory-panel .row-more.adjust-icon-button{width:30px;height:30px}
+@media(max-width:600px){
+ .inventory-panel .inventory-heading{padding-left:12px;padding-right:12px}
+ .inventory-panel .table-tools{padding-left:10px;padding-right:10px}
+ .inventory-panel .table-scroll th,.inventory-panel .table-scroll td{padding-top:10px;padding-bottom:10px}
+ .inventory-panel .table-scroll th:first-child,.inventory-panel .table-scroll td:first-child{padding-left:10px}
+ .inventory-panel .table-scroll th:nth-child(2),.inventory-panel .table-scroll td:nth-child(2){width:66px}
+ .inventory-panel .table-scroll th:nth-child(3),.inventory-panel .table-scroll td:nth-child(3){width:42px}
+ .inventory-panel .product-cell{gap:7px}
+ .inventory-panel .product-icon{width:26px;height:26px;flex-basis:26px}
+ .inventory-panel .product-icon svg{width:15px;height:15px}
+ .inventory-panel .product-name-stack b{font-size:10px;line-height:1.35}
+ .inventory-panel .product-name-stack span{font-size:9px;margin-top:2px}
+ .inventory-panel .row-more.adjust-icon-button{width:28px;height:28px}
+ .inventory-panel .table-footer{padding-left:10px;padding-right:10px}
+}
