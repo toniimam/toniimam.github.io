@@ -551,7 +551,15 @@ export default function App() {
       placeholder="Cari nama barang / SKU / brand"
       onChange={e => { setSaleProductSearch(e.target.value); setSaleProductId('') }}
       autoComplete="off"
+      style={{ paddingRight: saleProductSearch ? 38 : undefined }}
     />
+    {saleProductSearch && <button
+      type="button"
+      aria-label="Hapus input barang"
+      title="Hapus input barang"
+      onClick={() => { setSaleProductSearch(''); setSaleProductId(''); setSalePrice('0') }}
+      style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', width: 28, height: 28, display: 'grid', placeItems: 'center', border: 0, borderRadius: 7, background: 'transparent', color: '#7b8495', cursor: 'pointer', fontSize: 22, lineHeight: 1 }}
+    >×</button>}
     {!saleProductId && saleProductSearch.trim() && saleProductResults.length > 0 && <div className="sales-product-results">
       {saleProductResults.map(product => <button key={product.id} type="button" onMouseDown={e => e.preventDefault()} onClick={() => {
         setSaleProductId(String(product.id))
