@@ -410,9 +410,14 @@ export default function App() {
           {notice && <div className="toast" role="status"><span className="toast-check">✓</span><span>{notice}</span><button aria-label="Tutup pemberitahuan" onClick={() => setNotice('')}><X size={15} /></button></div>}
           {activeNav === 'Dashboard' && <section className="dashboard-overview">
   <div className="metric-grid">
-    <article className="metric-card"><div className="metric-top"><span>Total jenis barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{products.length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">{activeBrands.toLocaleString('id-ID')} brand terdaftar</span></div></article>
-    <article className="metric-card"><div className="metric-top"><span>Barang stok minus</span><div className="metric-icon blue"><Boxes size={19} /></div></div><div className="metric-value">{products.filter(p => p.stock < 0).length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">Saldo negatif, termasuk barang PO</span></div></article>
-    <article className="metric-card"><div className="metric-top"><span>Total barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{totalStockUnits.toLocaleString('id-ID')}<small> unit</small></div><div className="metric-foot"><span className="foot-neutral">Jumlah unit stok tersedia saat ini</span></div></article>
+    <article className="metric-card" style={{ gridColumn: '1 / -1' }}>
+      <div className="metric-top"><span>Ringkasan barang</span><div className="metric-icon purple"><Package size={19} /></div></div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 12 }}>
+        <div><div style={{ fontSize: 12, color: '#72798b', marginBottom: 6 }}>Total jenis barang</div><div className="metric-value">{products.length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">{activeBrands.toLocaleString('id-ID')} brand</span></div></div>
+        <div><div style={{ fontSize: 12, color: '#72798b', marginBottom: 6 }}>Barang stok minus</div><div className="metric-value">{products.filter(p => p.stock < 0).length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">Saldo negatif</span></div></div>
+        <div><div style={{ fontSize: 12, color: '#72798b', marginBottom: 6 }}>Total barang</div><div className="metric-value">{totalStockUnits.toLocaleString('id-ID')}<small> unit</small></div><div className="metric-foot"><span className="foot-neutral">Jumlah stok semua barang</span></div></div>
+      </div>
+    </article>
   </div>
   <article className="panel activity-panel dashboard-sales-panel">
     <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Total nilai penjualan per hari.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
