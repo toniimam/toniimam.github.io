@@ -126,7 +126,7 @@
 
 /* Dashboard sales statistics and compact brand targets */
 .dashboard-overview{display:grid!important;grid-template-columns:minmax(0,1fr);gap:16px}
-.dashboard-overview>.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.dashboard-overview>.metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .dashboard-sales-panel{display:block!important;visibility:visible!important;min-width:0;padding:20px}
 .dashboard-sales-panel .panel-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .dashboard-range-toggle{display:flex;gap:4px;padding:4px;background:#f1f3fa;border:1px solid #e6e9f2;border-radius:10px}
@@ -176,7 +176,7 @@
  .sales-days-30 .dashboard-sales-day{font-size:7px}
  .dashboard-sales-bars.sales-days-30{gap:1px}
  .dashboard-sales-bar{width:75%}
- .brand-target-grid{grid-template-columns:minmax(0,1fr);gap:7px}
+ .brand-target-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
  .brand-target-summary{padding:11px}
  .brand-target-summary b{font-size:12px}
  .dashboard-note{align-items:flex-start;flex-wrap:wrap}
@@ -192,10 +192,10 @@
 .brand-target-grid{gap:10px;margin-top:14px}
 .brand-target-collapsible{border:1px solid #e8ebf4;border-radius:13px;background:linear-gradient(180deg,#fff 0%,#fcfcff 100%);box-shadow:0 2px 7px #27345b05;transition:border-color .18s,box-shadow .18s}
 .brand-target-collapsible:hover{border-color:#d8dcfb;box-shadow:0 5px 16px #303a660d}
-.brand-target-summary{min-height:68px;padding:14px 15px;gap:12px}
+.brand-target-summary{min-height:58px;padding:10px 11px;gap:8px}
 .brand-target-summary b{font-size:12px;line-height:1.45;color:#30394d}
 .brand-target-summary>div:first-child span{font-size:10px;line-height:1.5;color:#838ca0}
-.brand-target-summary-right{gap:10px;font-size:11px}
+.brand-target-summary-right{gap:5px;font-size:10px}
 .brand-target-summary-right>span:first-child{padding:5px 8px;border-radius:7px;background:#f0f1ff;color:#5c62d8}
 .brand-target-chevron{width:23px;height:23px;display:grid;place-items:center;border:1px solid #e8eaf3;border-radius:7px;font-size:14px}
 .brand-target-collapsible[open]{border-color:#d8dcfb;box-shadow:0 5px 18px #343d720b}
@@ -219,4 +219,4 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;background
 .toast button{display:grid;place-items:center;width:24px;height:24px;border-radius:7px;color:#929bad}
 .toast button:hover{background:#f2f3f8;color:#4f586b}
 @keyframes toast-in{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:600px){.toast{top:77px;right:12px;max-width:calc(100vw - 24px)}.brand-target-panel{padding:15px 12px}.brand-target-summary{padding:12px;min-height:64px}.brand-target-bottom{padding:0 12px 12px}.brand-target-edit input{width:100%;height:40px}.brand-target-edit button{padding:0 12px}.dashboard-sales-summary{grid-template-columns:minmax(0,1fr)}input[type="date"]{min-height:44px;font-size:13px}}
+@media(max-width:600px){.toast{top:77px;right:12px;max-width:calc(100vw - 24px)}.brand-target-panel{padding:15px 12px}.brand-target-summary{padding:9px;min-height:54px}.brand-target-bottom{padding:0 12px 12px}.brand-target-edit input{width:100%;height:40px}.brand-target-edit button{padding:0 12px}.dashboard-sales-summary{grid-template-columns:minmax(0,1fr)}input[type="date"]{min-height:44px;font-size:13px}}
