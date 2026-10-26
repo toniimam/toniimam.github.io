@@ -81,3 +81,44 @@
 .sales-submit:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:1000px){.sales-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sales-field-product{grid-column:span 2}}
 @media(max-width:600px){.sales-page{padding:15px 0 0}.sales-page-heading{padding:0 13px 13px}.sales-form-card{margin:0 13px 22px;padding:14px;border-radius:10px}.sales-form-grid{grid-template-columns:minmax(0,1fr);gap:13px}.sales-field-product{grid-column:auto}.sales-form-bottom{gap:14px;margin-top:16px;padding-top:14px}.sales-stock-info{width:calc(50% - 7px);min-width:0}.sales-total{width:100%;flex:auto;padding:12px;border-radius:9px;background:#f8f9fd;border:1px solid #edf0f5}.sales-total strong{font-size:22px}.sales-submit{width:100%;min-height:44px}.sales-count{margin-right:13px}.sales-page .inventory-heading:not(.sales-page-heading){padding-left:13px;padding-right:13px}}
+
+/* StokFlow navigation refresh: no sidebar, desktop top navigation, mobile bottom navigation */
+.app-shell{display:block;min-height:100vh}
+.sidebar,.mobile-scrim,.mobile-menu{display:none!important}
+.main-area{width:100%;min-width:0}
+.topbar{height:72px;padding:0 28px;gap:18px}
+.topbar .brand-lockup{padding:0;flex-shrink:0}
+.topbar .top-actions{gap:12px}
+.logout-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 11px;border:1px solid #e7eaf2;border-radius:9px;background:#fff;color:#596276;font-size:11px;font-weight:700}
+.desktop-nav{display:flex;align-items:center;gap:6px;padding:10px 28px;background:#fff;border-bottom:1px solid #e9ecf3;overflow-x:auto;scrollbar-width:thin}
+.desktop-nav .nav-item{width:auto;flex:0 0 auto;white-space:nowrap;padding:10px 12px;gap:8px}
+.mobile-bottom-nav{display:none}
+.dashboard-stock-panel{margin-bottom:18px}
+.dashboard-stock-panel .panel-heading{padding-bottom:14px}
+.dashboard-stock-panel .table-scroll{max-height:430px;overflow:auto}
+@media(max-width:1120px){
+  .topbar{padding:0 20px}
+  .desktop-nav{padding-left:20px;padding-right:20px}
+}
+@media(max-width:850px){
+  .topbar{height:62px;padding:0 14px}
+  .topbar .brand-lockup strong{font-size:19px}
+  .topbar .brand-lockup span{font-size:7px}
+  .topbar .top-actions{gap:8px}
+  .topbar .system-status{display:none}
+  .desktop-nav{display:none}
+  .mobile-bottom-nav{position:fixed;z-index:40;left:0;right:0;bottom:0;display:flex;align-items:stretch;justify-content:space-around;gap:0;padding:6px 2px calc(6px + env(safe-area-inset-bottom));min-height:64px;background:rgba(255,255,255,.98);border-top:1px solid #e7eaf2;box-shadow:0 -6px 22px rgba(25,35,65,.06)}
+  .mobile-nav-item{display:flex;flex:1 1 0;min-width:0;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:4px 1px;border:0;border-radius:8px;background:transparent;color:#8790a3;font-size:8px;font-weight:650;line-height:1.15;text-align:center}
+  .mobile-nav-item span{max-width:100%;overflow-wrap:anywhere}
+  .mobile-nav-active{color:#555cda;background:#f0f1ff}
+  .content{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  .page-footer{padding-bottom:8px}
+  .dashboard-stock-panel .table-scroll{max-height:360px}
+  .logout-button{padding:8px;font-size:0;width:34px;height:34px}
+  .logout-button svg{width:16px;height:16px}
+}
+@media(max-width:380px){
+  .mobile-nav-item{font-size:7px}
+  .mobile-nav-item svg{width:17px;height:17px}
+  .topbar .icon-button{width:32px;height:32px}
+}
