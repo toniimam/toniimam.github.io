@@ -364,3 +364,30 @@ body{background:#f5f7f1}
 .sales-page .sales-form-bottom{align-items:stretch}
 .sales-page .sales-stock-info,.sales-page .sales-total{flex:1;min-width:0;min-height:64px;display:flex;flex-direction:column;justify-content:center}
 .sales-page .sales-stock-info>span,.sales-page .sales-total>span{min-height:18px}
+
+/* Compact layout khusus tabel riwayat penjualan di halaman Jual */
+.sales-history-table table{table-layout:fixed;white-space:normal}
+.sales-history-table th,.sales-history-table td{padding:8px 9px}
+.sales-history-table th:first-child,.sales-history-table td:first-child{padding-left:12px;width:58px}
+.sales-history-table th:nth-child(2),.sales-history-table td:nth-child(2){width:38%}
+.sales-history-table th:nth-child(3),.sales-history-table td:nth-child(3){width:42px;text-align:center}
+.sales-history-table th:nth-child(4),.sales-history-table td:nth-child(4){width:29%}
+.sales-history-table th:last-child,.sales-history-table td:last-child{width:62px;padding-right:10px}
+.sales-history-product b{display:block;font-size:10px;line-height:1.35;color:#30394d}
+.sales-history-product span{display:block;margin-top:2px;font-size:9px;color:#858da0}
+.sales-price-stack span,.sales-price-stack b{display:block;line-height:1.35}
+.sales-price-stack span{font-size:9px;color:#858da0}
+.sales-price-stack b{font-size:10px;color:#515b70;margin-top:2px}
+@media(max-width:600px){
+ .sales-history-table th,.sales-history-table td{padding:8px 5px;font-size:9px}
+ .sales-history-table th:first-child,.sales-history-table td:first-child{padding-left:8px;width:47px}
+ .sales-history-table th:nth-child(2),.sales-history-table td:nth-child(2){width:35%}
+ .sales-history-table th:nth-child(3),.sales-history-table td:nth-child(3){width:32px}
+ .sales-history-table th:nth-child(4),.sales-history-table td:nth-child(4){width:31%}
+ .sales-history-table th:last-child,.sales-history-table td:last-child{width:52px;padding-right:6px}
+ .sales-history-table td:last-child>div{gap:2px!important}
+ .sales-history-table td:last-child .text-action{padding:3px}
+ .sales-history-table td:last-child svg{width:13px;height:13px}
+ .sales-price-stack span{font-size:8px}
+ .sales-price-stack b{font-size:9px}
+}
