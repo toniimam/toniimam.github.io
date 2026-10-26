@@ -106,7 +106,7 @@ export default function App() {
       const result: Product[] = (rawBarang || []).map((b: any) => {
         const startDate = b.tanggal_mulai || (b.created_at ? new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(b.created_at)) : '')
         const openingStock = startDate ? (startDate <= todayLocal() ? Number(b.stok_awal || 0) : 0) : Number(b.stok_awal || 0)
-        const movement = txList.filter(t => t.barang_id === b.id && t.tanggal && t.tanggal <= todayLocal() && (!startDate || t.tanggal >= startDate)).reduce((sum, t) => {
+        const movement = txList.filter(t => t.barang_id === b.id && t.tanggal && t.tanggal <= todayLocal()).reduce((sum, t) => {
           if (t.type === 'masuk' || t.type === 'adjust_masuk') return sum + Number(t.qty)
           if (t.type === 'laku' || t.type === 'adjust_keluar') return sum - Number(t.qty)
           if (t.type === 'adjust') return sum + Number(t.qty)
