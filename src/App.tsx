@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Boxes, LayoutDashboard, LogOut, MoreHorizontal, Package, Pencil, Search, ShoppingCart, SlidersHorizontal, Sparkles, Trash2, TrendingUp, Truck, X } from 'lucide-react'
+import { Activity, ArrowUpRight, Bell, Boxes, LayoutDashboard, LogOut, MoreHorizontal, Package, Pencil, Search, ShoppingCart, SlidersHorizontal, Sparkles, Trash2, TrendingUp, Truck, X } from 'lucide-react'
 
 type Brand = { id: number; nama: string; target_bulanan: number }
 type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; openingStock: number; startDate: string; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
@@ -356,24 +356,8 @@ export default function App() {
       </div>
     </div>
   }
-  const lowStock = products.filter(p => p.stock > 0 && p.stock <= 10).length
-  const outStock = products.filter(p => p.stock <= 0).length
-
-  const safeStock = products.filter(p => p.stock > 10).length
-  const inventoryValue = products.reduce((sum, p) => sum + Math.max(0, p.stock) * Math.max(0, p.price), 0)
   const now = new Date()
-  const monthTransactions = transactions.filter(t => t.tanggal && new Date(t.tanggal).getFullYear() === now.getFullYear() && new Date(t.tanggal).getMonth() === now.getMonth())
-  const soldThisMonth = monthTransactions.filter(t => t.type === 'laku').reduce((sum, t) => sum + Number(t.qty || 0), 0)
-  const incomingThisMonth = monthTransactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').reduce((sum, t) => sum + Number(t.qty || 0), 0)
-  const lastSevenDays = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - index))
-    const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
-    const dayTx = transactions.filter(t => t.tanggal && new Date(t.tanggal).getFullYear() === date.getFullYear() && new Date(t.tanggal).getMonth() === date.getMonth() && new Date(t.tanggal).getDate() === date.getDate())
-    return { key, label: date.toLocaleDateString('id-ID', { weekday: 'short' }), sold: dayTx.filter(t => t.type === 'laku').reduce((sum, t) => sum + Number(t.qty || 0), 0), incoming: dayTx.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').reduce((sum, t) => sum + Number(t.qty || 0), 0) }
-  })
-  const trendMax = Math.max(1, ...lastSevenDays.flatMap(d => [d.sold, d.incoming]))
   const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size
-  const recentActivityCount = monthTransactions.length
   const totalStockUnits = products.reduce((sum, p) => sum + Number(p.stock || 0), 0)
   const monthSales = sales.filter(sale => {
     if (!sale.tanggal_pembelian) return false
