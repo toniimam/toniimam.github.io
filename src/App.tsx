@@ -590,9 +590,9 @@ export default function App() {
                 </label>
                 <label className="sales-field sales-field-price"><span>Harga</span>
                   <div className="sales-input-wrap sales-price-input"><small>Rp</small><input type="text" inputMode="numeric" value={salePrice} onChange={e => setSalePrice(formatRupiahInput(e.target.value))} /></div>
-                  <small>Contoh: 1.000.000</small>
+                
                 </label>
-                <label className="sales-field"><span>Tanggal penjualan</span>
+                <label className="sales-field sales-field-date"><span>Tanggal penjualan</span>
                   <input type="date" value={saleDate} max={todayLocal()} onChange={e => setSaleDate(e.target.value)} />
                 </label>
               </div>
