@@ -59,6 +59,8 @@ export default function App() {
   const [sales, setSales] = useState<Sale[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
   const [targetDrafts, setTargetDrafts] = useState<Record<number, string>>({})
+  const [dashboardSalesRange, setDashboardSalesRange] = useState<7 | 30>(7)
+  const [expandedBrandTarget, setExpandedBrandTarget] = useState<number | null>(null)
   const [activeNav, setActiveNav] = useState('Dashboard')
   const [query, setQuery] = useState('')
   const [notice, setNotice] = useState('')
@@ -372,6 +374,7 @@ export default function App() {
   const trendMax = Math.max(1, ...lastSevenDays.flatMap(d => [d.sold, d.incoming]))
   const activeBrands = new Set(products.map(p => p.brand).filter(b => b !== 'Tanpa brand')).size
   const recentActivityCount = monthTransactions.length
+  const totalStockUnits = products.reduce((sum, p) => sum + Number(p.stock || 0), 0)
   const monthSales = sales.filter(sale => {
     if (!sale.tanggal_pembelian) return false
     const date = new Date(sale.tanggal_pembelian + 'T00:00:00')
@@ -382,6 +385,19 @@ export default function App() {
     const target = Math.max(0, Number(targetDrafts[brand.id] ?? brand.target_bulanan) || 0)
     return { ...brand, sold, target, progress: target > 0 ? Math.min(100, sold / target * 100) : 0 }
   }).sort((a, b) => b.sold - a.sold)
+  const dashboardSalesDays = Array.from({ length: dashboardSalesRange }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (dashboardSalesRange - 1 - index))
+    const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
+    const daySales = sales.filter(sale => sale.tanggal_pembelian === key)
+    return { key, label: dashboardSalesRange === 7 ? date.toLocaleDateString('id-ID', { weekday: 'short' }) : String(date.getDate()), sold: daySales.reduce((sum, sale) => sum + Number(sale.qty || 0), 0), revenue: daySales.reduce((sum, sale) => sum + Number(sale.qty || 0) * Number(sale.harga || 0), 0) }
+  })
+  const dashboardSalesMax = Math.max(1, ...dashboardSalesDays.map(d => d.sold))
+  const dashboardSalesQty = dashboardSalesDays.reduce((sum, d) => sum + d.sold, 0)
+  const dashboardSalesRevenue = dashboardSalesDays.reduce((sum, d) => sum + d.revenue, 0)
+  const targetBrands = brandMonthlySales.filter(brand => brand.target > 0)
+  const totalTarget = targetBrands.reduce((sum, brand) => sum + brand.target, 0)
+  const totalAchieved = targetBrands.reduce((sum, brand) => sum + brand.sold, 0)
+  const totalTargetProgress = totalTarget > 0 ? Math.min(100, totalAchieved / totalTarget * 100) : 0
 
   if (!token) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 20, background: '#f5f6fb', fontFamily: 'Inter,system-ui,sans-serif' }}>
@@ -408,44 +424,27 @@ export default function App() {
           <div className="welcome-row"><div><div className="eyebrow"><Sparkles size={14} /> DATABASE STOKFLOW</div><h1>{activeNav}</h1><p>Data inventaris langsung dari Supabase, bukan data demo.</p></div></div>
           {notice && <div className="demo-alert"><div className="alert-symbol"><Activity size={17} /></div><div><b>Status</b><span>{notice}</span></div><button onClick={() => setNotice('')} style={{ marginLeft: 'auto', border: 0, background: 'transparent', cursor: 'pointer' }}><X size={16} /></button></div>}
           {activeNav === 'Dashboard' && <section className="dashboard-overview">
-            <div className="metric-grid">
-              <article className="metric-card"><div className="metric-top"><span>Total jenis barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{products.length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">{activeBrands.toLocaleString('id-ID')} brand terdaftar</span></div></article>
-              <article className="metric-card"><div className="metric-top"><span>Barang stok minus</span><div className="metric-icon blue"><Boxes size={19} /></div></div><div className="metric-value">{products.filter(p => p.stock < 0).length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">Saldo negatif, termasuk barang PO</span></div></article>
-              <article className="metric-card"><div className="metric-top"><span>Nilai estimasi stok</span><div className="metric-icon purple"><TrendingUp size={19} /></div></div><div className="metric-value" style={{fontSize: inventoryValue >= 1000000000 ? 20 : 23}}>{rupiah(inventoryValue)}</div><div className="metric-foot"><span className="foot-neutral">Berdasarkan harga per unit</span></div></article>
-              <article className="metric-card"><div className="metric-top"><span>Perlu pengadaan</span><div className="metric-icon red"><Bell size={19} /></div></div><div className="metric-value">{(lowStock + outStock).toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className={outStock ? 'foot-danger' : 'foot-warning'}>{outStock.toLocaleString('id-ID')} habis, {lowStock.toLocaleString('id-ID')} menipis</span></div></article>
-            </div>
-            <article className="panel dashboard-stock-panel">
-              <div className="panel-heading"><div><h2>Stok aktual per barang</h2><p>10 barang dengan saldo terendah. Saldo minus tetap ditampilkan untuk barang yang masih PO.</p></div><span className="demo-pill">10 BARANG</span></div>
-              <div className="table-scroll"><table><thead><tr><th>BARANG</th><th>BRAND</th><th>STOK AKTUAL</th><th>STATUS</th></tr></thead><tbody>{[...products].sort((a, b) => a.stock - b.stock || a.name.localeCompare(b.name)).slice(0, 10).map(p => <tr key={p.id}><td><div className="product-cell"><div className="product-icon"><Package size={18} /></div><div><b>{p.name}</b><span>{p.sku}</span></div></div></td><td><span className="brand-name">{p.brand}</span></td><td><b className={p.stock <= 0 ? 'stock-zero' : ''}>{p.stock.toLocaleString('id-ID')}</b><span className="unit-label"> unit</span></td><td><span className={'status-badge ' + (p.stock < 0 ? 'status-out' : p.stock === 0 ? 'status-out' : p.stock <= 10 ? 'status-low' : 'status-safe')}><i />{p.stock < 0 ? 'Minus / PO' : p.stock === 0 ? 'Habis' : p.stock <= 10 ? 'Menipis' : 'Aman'}</span></td></tr>)}{products.length === 0 && <tr><td colSpan={4} className="empty-state">Belum ada data stok.</td></tr>}</tbody></table></div>
-            </article>
-            <article className="panel brand-target-panel">
-              <div className="panel-heading"><div><h2>Brand &amp; target penjualan</h2><p>Realisasi omzet bulan ini dibanding target Rupiah</p></div><span className="demo-pill">{brands.length} BRAND</span></div><p className="brand-target-note">Omzet dihitung dari jumlah terjual × harga yang tercatat pada transaksi penjualan.</p>
-              <div className="brand-target-grid">{brandMonthlySales.map(brand => <div className="brand-target-item" key={brand.id}>
-                <div className="brand-target-top"><b>{brand.nama}</b><span>{rupiah(brand.sold)} / {rupiah(brand.target)}</span></div>
-                <div className="brand-target-track"><div style={{ width: brand.progress + '%' }} /></div>
-                <div className="brand-target-bottom"><span>{brand.target > 0 ? Math.round(brand.sold / brand.target * 100) + '% tercapai' : 'Target belum diisi'}</span><div className="brand-target-edit"><input aria-label={'Target penjualan bulanan dalam Rupiah untuk ' + brand.nama} type="number" min="0" step="1000" value={targetDrafts[brand.id] ?? String(brand.target_bulanan || 0)} onChange={e => setTargetDrafts(current => ({ ...current, [brand.id]: e.target.value }))} /><button onClick={() => saveBrandTarget(brand)}>Simpan</button></div></div>
-              </div>)}</div>
-            </article>
-            <div className="chart-grid dashboard-stats-grid">
-              <article className="panel activity-panel">
-                <div className="panel-heading"><div><h2>Aktivitas inventaris</h2><p>Pergerakan barang selama 7 hari terakhir</p></div><span className="demo-pill">7 HARI</span></div>
-                <div className="dashboard-trend-legend"><span><i className="sold-key" /> Barang terjual</span><span><i className="incoming-key" /> Barang masuk</span></div>
-                <div className="dashboard-bars">{lastSevenDays.map(day => <div className="dashboard-bar-day" key={day.key}><div className="dashboard-bar-pair"><div title={'Terjual: ' + day.sold} className="dashboard-bar sold-bar" style={{height: Math.max(day.sold ? 5 : 2, day.sold / trendMax * 100) + '%'}} /><div title={'Masuk: ' + day.incoming} className="dashboard-bar incoming-bar" style={{height: Math.max(day.incoming ? 5 : 2, day.incoming / trendMax * 100) + '%'}} /></div><span>{day.label}</span></div>)}</div>
-                <div className="dashboard-chart-summary"><div><span>Terjual bulan ini</span><b>{soldThisMonth.toLocaleString('id-ID')} unit</b></div><div><span>Barang masuk bulan ini</span><b>{incomingThisMonth.toLocaleString('id-ID')} unit</b></div></div>
-              </article>
-              <article className="panel activity-panel dashboard-health-panel">
-                <div className="panel-heading"><div><h2>Kesehatan stok</h2><p>Proporsi kondisi barang saat ini</p></div></div>
-                <div className="dashboard-health-score"><div className="dashboard-health-ring" style={{background: 'conic-gradient(#29b783 0 ' + (products.length ? safeStock / products.length * 100 : 0) + '%, #e6a43c ' + (products.length ? safeStock / products.length * 100 : 0) + '% ' + (products.length ? (safeStock + lowStock) / products.length * 100 : 0) + '%, #e27676 ' + (products.length ? (safeStock + lowStock) / products.length * 100 : 0) + '% 100%)'}}><div><b>{products.length ? Math.round(safeStock / products.length * 100) : 0}%</b><span>stok aman</span></div></div></div>
-                <div className="dashboard-health-legend"><div><span><i className="health-safe" /> Aman</span><b>{safeStock.toLocaleString('id-ID')}</b></div><div><span><i className="health-low" /> Menipis</span><b>{lowStock.toLocaleString('id-ID')}</b></div><div><span><i className="health-out" /> Habis</span><b>{outStock.toLocaleString('id-ID')}</b></div></div>
-              </article>
-            </div>
-            <div className="dashboard-bottom-grid">
-              <article className="panel dashboard-insight"><div className="dashboard-insight-icon blue"><ArrowDownLeft size={19}/></div><div><span>Barang masuk bulan ini</span><b>{incomingThisMonth.toLocaleString('id-ID')} unit</b><p>Total kuantitas transaksi masuk pada bulan berjalan.</p></div></article>
-              <article className="panel dashboard-insight"><div className="dashboard-insight-icon purple"><ShoppingCart size={19}/></div><div><span>Barang terjual bulan ini</span><b>{soldThisMonth.toLocaleString('id-ID')} unit</b><p>Total kuantitas penjualan bulan berjalan.</p></div></article>
-              <article className="panel dashboard-insight"><div className="dashboard-insight-icon amber"><Activity size={19}/></div><div><span>Transaksi bulan ini</span><b>{recentActivityCount.toLocaleString('id-ID')}</b><p>Jumlah catatan pergerakan barang bulan berjalan.</p></div></article>
-            </div>
-            <div className="dashboard-note"><Sparkles size={16}/><span>Ringkasan dari Supabase saat data dimuat. Halaman <b>Barang &amp; Stok</b> khusus untuk pencarian dan tabel barang.</span><button onClick={() => loadData()} disabled={loading}>{loading ? 'Memuat...' : 'Perbarui data'}</button></div>
-          </section>}
+  <div className="metric-grid">
+    <article className="metric-card"><div className="metric-top"><span>Total jenis barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{products.length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">{activeBrands.toLocaleString('id-ID')} brand terdaftar</span></div></article>
+    <article className="metric-card"><div className="metric-top"><span>Barang stok minus</span><div className="metric-icon blue"><Boxes size={19} /></div></div><div className="metric-value">{products.filter(p => p.stock < 0).length.toLocaleString('id-ID')}<small> SKU</small></div><div className="metric-foot"><span className="foot-neutral">Saldo negatif, termasuk barang PO</span></div></article>
+    <article className="metric-card"><div className="metric-top"><span>Total barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{totalStockUnits.toLocaleString('id-ID')}<small> unit</small></div><div className="metric-foot"><span className="foot-neutral">Jumlah stok aktual seluruh barang</span></div></article>
+    <article className="metric-card"><div className="metric-top"><span>Omzet</span><div className="metric-icon red"><TrendingUp size={19} /></div></div><div className="metric-value" style={{fontSize: totalTarget >= 1000000000 ? 19 : 22}}>{rupiah(totalAchieved)}</div><div className="metric-foot"><span className={totalTargetProgress >= 100 ? 'foot-neutral' : 'foot-warning'}>{totalTarget > 0 ? `${rupiah(totalTarget)} target, ${Math.round(totalTargetProgress)}% tercapai` : 'Belum ada target brand'}</span></div></article>
+  </div>
+  <article className="panel activity-panel dashboard-sales-panel">
+    <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Penjualan berdasarkan periode yang dipilih.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
+    <div className="dashboard-sales-summary"><div><span>Unit terjual</span><b>{dashboardSalesQty.toLocaleString('id-ID')}</b></div><div><span>Omzet</span><b>{rupiah(dashboardSalesRevenue)}</b></div></div>
+    <div className={'dashboard-sales-bars sales-days-' + dashboardSalesRange}>{dashboardSalesDays.map(day => <div className="dashboard-sales-day" key={day.key}><div className="dashboard-sales-bar-wrap"><div title={day.sold.toLocaleString('id-ID') + ' unit'} className="dashboard-sales-bar" style={{height: Math.max(day.sold ? 5 : 2, day.sold / dashboardSalesMax * 100) + '%'}} /></div><span>{day.label}</span></div>)}</div>
+  </article>
+  <article className="panel brand-target-panel">
+    <div className="panel-heading"><div><h2>Brand &amp; target penjualan</h2><p>Realisasi omzet bulan ini. Brand tanpa target tidak dihitung pada omzet dashboard.</p></div><span className="demo-pill">{brands.length} BRAND</span></div>
+    <div className="brand-target-grid">{brandMonthlySales.map(brand => <details className="brand-target-item brand-target-collapsible" key={brand.id} open={expandedBrandTarget === brand.id} onToggle={e => { if (e.currentTarget.open) setExpandedBrandTarget(brand.id); else if (expandedBrandTarget === brand.id) setExpandedBrandTarget(null) }}>
+      <summary className="brand-target-summary"><div><b>{brand.nama}</b><span>{brand.target > 0 ? `${rupiah(brand.sold)} / ${rupiah(brand.target)}` : `${rupiah(brand.sold)} · tanpa target`}</span></div><div className="brand-target-summary-right"><span>{brand.target > 0 ? Math.round(brand.sold / brand.target * 100) + '%' : '-'}</span><span className="brand-target-chevron">⌄</span></div></summary>
+      <div className="brand-target-track"><div style={{ width: brand.progress + '%' }} /></div>
+      <div className="brand-target-bottom"><span>{brand.target > 0 ? 'Target bulanan' : 'Target belum diisi'}</span><div className="brand-target-edit"><input aria-label={'Target penjualan bulanan dalam Rupiah untuk ' + brand.nama} type="number" min="0" step="1000" value={targetDrafts[brand.id] ?? String(brand.target_bulanan || 0)} onChange={e => setTargetDrafts(current => ({ ...current, [brand.id]: e.target.value }))} /><button onClick={() => saveBrandTarget(brand)}>Simpan</button></div></div>
+    </details>)}</div>
+  </article>
+  <div className="dashboard-note"><Sparkles size={16}/><span>Ringkasan dari Supabase saat data dimuat. Halaman <b>Barang &amp; Stok</b> khusus untuk pencarian dan tabel barang.</span><button onClick={() => loadData()} disabled={loading}>{loading ? 'Memuat...' : 'Perbarui data'}</button></div>
+</section>}
           {activeNav === 'Penjualan' && <section className="panel inventory-panel sales-page">
             <div className="inventory-heading sales-page-heading"><div><h2>Catat penjualan</h2><p>Isi barang, jumlah, harga, dan tanggal. Stok diperbarui otomatis saat disimpan.</p></div><span className="sales-count">{sales.length.toLocaleString('id-ID')} transaksi</span></div>
             <div className="sales-form-card">
