@@ -1,0 +1,59 @@
+name: Temp Penjualan fix
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix Penjualan only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/App.tsx')
+          s=p.read_text()
+          # Fix rupiah parser so 1.000 => 1000 and formatting remains dot-separated.
+          old="const parseRupiahInput = (v: string) => Number(v.replace(/\\./g, '').replace(/\\D/g, '') || 0)"
+          new="const parseRupiahInput = (v: string) => Number(v.replace(/\\D/g, '') || 0)"
+          if old in s: s=s.replace(old,new,1)
+          # Insert product filter state if absent.
+          marker="const [saleBrand, setSaleBrand] = useState('')"
+          if marker in s and "const [saleProductFilter" not in s:
+              s=s.replace(marker, "const [saleProductFilter, setSaleProductFilter] = useState('')\n"+marker,1)
+          # Add filtered products memo before brand results.
+          marker="const saleBrandResults = useMemo(() => {"
+          if marker in s and "const saleProductResults = useMemo" not in s:
+              ins="const saleProductResults = useMemo(() => {\n  const q = saleProductFilter.trim().toLowerCase()\n  if (!q) return products\n  return products.filter(p => `${p.name} ${p.sku} ${p.brand}`.toLowerCase().includes(q))\n}, [products, saleProductFilter])\n\n"
+              s=s.replace(marker,ins+marker,1)
+          # Replace product select with filter + select.
+          old_start='<label className="sales-field"><span>Produk</span>'
+          pos=s.find(old_start)
+          if pos>=0:
+              sel_end=s.find('</label>',pos)
+              block=s[pos:sel_end+8]
+              if '<select' in block and 'saleProductFilter' not in block:
+                  newblock='''<label className="sales-field"><span>Produk</span>\n  <div style={{ position: 'relative' }}>\n    <input value={saleProductFilter} placeholder="Filter nama / SKU / brand" onChange={e => setSaleProductFilter(e.target.value)} autoComplete="off" />\n    <select value={saleProductId} onChange={e => { const id=e.target.value; setSaleProductId(id); const item=products.find(p=>p.id===Number(id)); if(item){ setSalePrice(formatRupiahInput(String(item.price))); setSaleBrand(item.brand==='Tanpa brand'?'':item.brand) } }}>\n      <option value="">Pilih produk</option>\n      {saleProductResults.map(p => <option key={p.id} value={p.id}>{p.name} • {p.sku}</option>)}\n    </select>\n  </div>\n</label>'''
+                  s=s[:pos]+newblock+s[sel_end+8:]
+          # Remove price helper text if still present.
+          s=s.replace("\n  <small>Contoh: 1.000.000</small>","")
+          # Align price/date and stock/estimate in sales grid via classes.
+          s=s.replace('className="sales-field"><span>Harga</span>','className="sales-field sales-field-price"><span>Harga</span>',1)
+          # Ensure date field has matching class if exact label exists.
+          s=s.replace('className="sales-field"><span>Tanggal','className="sales-field sales-field-date"><span>Tanggal',1)
+          # Make stock and estimate cards share class if present.
+          s=s.replace('className="sales-stock-card"','className="sales-stock-card sales-summary-card"')
+          s=s.replace('className="sales-total-card"','className="sales-total-card sales-summary-card"')
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/App.tsx
+          git diff --cached --quiet || git commit -m 'Fix Penjualan filter and alignment'
+          git push
+      - name: Remove temp workflow
+        run: |
+          git rm .github/workflows/temp-sales-fix.yml
+          git commit -m 'Remove temporary sales fix workflow'
+          git push
