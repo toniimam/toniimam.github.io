@@ -324,3 +324,24 @@ body{background:#f5f7f1}
  .inventory-heading h2{font-size:14px}
  .inventory-heading p{font-size:9px}
 }
+
+
+/* Penjualan: compact mobile form, scoped to the Penjualan page only */
+@media(max-width:600px){
+  .sales-page .sales-form-card{padding:11px;margin:0 9px 16px;border-color:#e5ebdf;background:#fff}
+  .sales-page .sales-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .sales-page .sales-field-product{grid-column:1 / -1}
+  .sales-page .sales-field:nth-child(4){grid-column:1 / -1}
+  .sales-page .sales-field{gap:5px;font-size:10px}
+  .sales-page .sales-field input,.sales-page .sales-field select{height:39px;padding:0 9px;font-size:12px}
+  .sales-page .sales-field>small{font-size:8px}
+  .sales-page .sales-form-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px;padding-top:11px}
+  .sales-page .sales-stock-info{width:auto;min-width:0;padding:10px;border:1px solid #e5ebdf;border-radius:9px;background:#f7f9f4;gap:3px}
+  .sales-page .sales-stock-info>span,.sales-page .sales-total>span{font-size:9px;line-height:1.35}
+  .sales-page .sales-stock-info strong{font-size:12px;overflow-wrap:anywhere}
+  .sales-page .sales-total{width:auto;min-width:0;flex:none;padding:10px;background:#f7f9f4;border-color:#e5ebdf;gap:4px}
+  .sales-page .sales-total strong{font-size:16px;overflow-wrap:anywhere}
+  .sales-page .sales-submit{grid-column:1 / -1;min-height:42px}
+  .sales-page .sales-page-heading{margin-bottom:8px}
+  .sales-page .sales-count{font-size:9px;padding:6px 7px}
+}
