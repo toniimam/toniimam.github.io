@@ -97,7 +97,21 @@ export default function App() {
   const [editSaleBrand, setEditSaleBrand] = useState('')
   const [editSaleDate, setEditSaleDate] = useState(todayLocal())
 
-  async function loadData(currentToken = token) {
+  async function refreshAccessToken() {
+    const refreshToken = localStorage.getItem('stokflow_refresh_token')
+    if (!refreshToken) throw new Error('Sesi login sudah kedaluwarsa. Silakan masuk kembali.')
+    const session = await api('/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    })
+    if (!session?.access_token) throw new Error('Sesi login tidak dapat diperbarui. Silakan masuk kembali.')
+    localStorage.setItem('stokflow_token', session.access_token)
+    if (session.refresh_token) localStorage.setItem('stokflow_refresh_token', session.refresh_token)
+    setToken(session.access_token)
+    return session.access_token as string
+  }
+
+  async function loadData(currentToken = token, retried = false) {
     setLoading(true)
     try {
       const [rawBarang, rawBrand, rawTx, rawSales] = await Promise.all([
@@ -137,7 +151,17 @@ export default function App() {
       setSales((rawSales || []).map((sale: any) => ({ ...sale, id: Number(sale.id), qty: Number(sale.qty || 0), harga: Number(sale.harga || 0), barang_id: sale.barang_id == null ? null : Number(sale.barang_id) })))
       setNotice('Terhubung ke database StokFlow.')
     } catch (e: any) {
-      setNotice(`Gagal memuat data: ${e.message}`)
+      if (!retried && /jwt expired|token is expired|invalid jwt/i.test(String(e?.message || ''))) {
+        try {
+          const freshToken = await refreshAccessToken()
+          await loadData(freshToken, true)
+          return
+        } catch (refreshError: any) {
+          setNotice(refreshError?.message || 'Sesi login berakhir. Silakan masuk kembali.')
+        }
+      } else {
+        setNotice(`Gagal memuat data: ${e.message}`)
+      }
     } finally { setLoading(false) }
   }
 
@@ -145,8 +169,17 @@ export default function App() {
     try {
       await api(`/rest/v1/app_admins?select=email&limit=1`, {}, currentToken)
       setToken(currentToken); setEmail(currentEmail); await loadData(currentToken)
-    } catch {
-      localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail(''); clearAppData()
+    } catch (e: any) {
+      if (/jwt expired|token is expired|invalid jwt/i.test(String(e?.message || '')) && localStorage.getItem('stokflow_refresh_token')) {
+        try {
+          const freshToken = await refreshAccessToken()
+          setEmail(currentEmail)
+          await loadData(freshToken)
+          return
+        } catch {}
+      }
+      localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_refresh_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail(''); clearAppData()
+      setNotice('Sesi login berakhir. Silakan masuk kembali.')
     }
   }
 
@@ -166,7 +199,9 @@ export default function App() {
       if (!access) throw new Error('Token login tidak diterima.')
       const adminRows = await api('/rest/v1/app_admins?select=email&limit=1', {}, access)
       if (!adminRows?.length) throw new Error('Akun berhasil login, tetapi email ini belum terdaftar sebagai admin StokFlow.')
-      localStorage.setItem('stokflow_token', access); localStorage.setItem('stokflow_email', loginEmail.trim().toLowerCase())
+      localStorage.setItem('stokflow_token', access)
+      if (session.refresh_token) localStorage.setItem('stokflow_refresh_token', session.refresh_token)
+      localStorage.setItem('stokflow_email', loginEmail.trim().toLowerCase())
       setToken(access); setEmail(loginEmail.trim().toLowerCase()); setPassword(''); await loadData(access)
     } catch (e: any) { setNotice(e.message || 'Login gagal.') }
     finally { setLoginLoading(false) }
@@ -364,7 +399,7 @@ export default function App() {
     setEditingSaleId(null); setInventoryPage(1); setSalesPage(1); setIncomingPage(1); setReportPage(1)
   }
 
-  function logout() { localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail(''); clearAppData() }
+  function logout() { localStorage.removeItem('stokflow_token'); localStorage.removeItem('stokflow_refresh_token'); localStorage.removeItem('stokflow_email'); setToken(''); setEmail(''); clearAppData() }
   const inventoryFilterCount = [inventoryBrandFilter, inventoryStockFilter].filter(value => value !== 'all').length
   const inventoryBrands = useMemo(() => [...new Set(products.map(p => p.brand))].sort((a, b) => a.localeCompare(b, 'id')), [products])
   const filtered = useMemo(() => products.filter(p => {
