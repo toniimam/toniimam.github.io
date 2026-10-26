@@ -28,6 +28,38 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Install dependencies
         run: npm install
+      - name: Apply Penjualan clear button
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/App.tsx')
+          s = p.read_text()
+          old = '''    <input
+      value={saleProductSearch}
+      placeholder="Cari nama barang / SKU / brand"
+      onChange={e => { setSaleProductSearch(e.target.value); setSaleProductId('') }}
+      autoComplete="off"
+    />'''
+          new = '''    <div style={{ position: 'relative' }}>
+      <input
+        value={saleProductSearch}
+        placeholder="Cari nama barang / SKU / brand"
+        onChange={e => { setSaleProductSearch(e.target.value); setSaleProductId('') }}
+        autoComplete="off"
+        style={{ paddingRight: saleProductSearch ? 38 : undefined }}
+      />
+      {saleProductSearch && <button
+        type="button"
+        aria-label="Hapus barang"
+        title="Hapus barang"
+        onClick={() => { setSaleProductSearch(''); setSaleProductId(''); setSalePrice('0') }}
+        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', width: 28, height: 28, display: 'grid', placeItems: 'center', border: 0, borderRadius: 7, background: 'transparent', color: '#7b8495', cursor: 'pointer' }}
+      ><X size={16} /></button>}
+    </div>'''
+          if old not in s:
+              raise SystemExit('Target input Barang tidak ditemukan.')
+          p.write_text(s.replace(old, new, 1))
+          PY
       - name: Build
         run: npm run build
       - name: Upload artifact
