@@ -241,7 +241,7 @@ export default function App() {
     const product = products.find(item => item.id === Number(saleProductId))
     const qty = Number(saleQty)
     const price = parseRupiahInput(salePrice)
-    const brand = saleBrand.trim()
+    const brand = product.brand === 'Tanpa brand' ? '' : product.brand
     if (!product) { setNotice('Pilih barang yang akan dijual.'); return }
     if (!Number.isFinite(qty) || qty < 1) { setNotice('Jumlah penjualan minimal 1 unit.'); return }
     if (!Number.isFinite(price) || price < 0) { setNotice('Harga jual tidak boleh negatif.'); return }
@@ -561,26 +561,17 @@ export default function App() {
       onChange={e => { setSaleProductSearch(e.target.value); setSaleProductId('') }}
       autoComplete="off"
     />
-    {saleProductSearch.trim() && saleProductResults.length > 0 && <div className="sales-product-results">
+    {!saleProductId && saleProductSearch.trim() && saleProductResults.length > 0 && <div className="sales-product-results">
       {saleProductResults.map(product => <button key={product.id} type="button" onMouseDown={e => e.preventDefault()} onClick={() => {
         setSaleProductId(String(product.id))
         setSaleProductSearch(product.name)
         setSalePrice(formatRupiahInput(String(product.price)))
-        setSaleBrand(product.brand === 'Tanpa brand' ? '' : product.brand)
       }}>
-        <span>{product.name}</span><small>{product.sku} · {product.brand}</small>
+        <span>{product.name} • {Number(product.stock || 0).toLocaleString('id-ID')} pcs • {product.brand || 'Tanpa brand'}</span>
       </button>)}
     </div>}
   </div>
 </label>
-                <label className="sales-field sales-field-brand"><span>Brand</span>
-                  <div style={{ position: 'relative' }}>
-                    <input value={saleBrand} placeholder="Ketik nama brand" onFocus={() => setSaleBrandOpen(true)} onChange={e => { setSaleBrand(e.target.value); setSaleBrandOpen(true) }} onBlur={() => window.setTimeout(() => setSaleBrandOpen(false), 150)} autoComplete="off" />
-                    {saleBrandOpen && saleBrandResults.length > 0 && <div style={{ position: 'absolute', zIndex: 20, top: 'calc(100% + 4px)', left: 0, right: 0, maxHeight: 180, overflowY: 'auto', border: '1px solid #e1e8dc', borderRadius: 9, background: '#fff', boxShadow: '0 8px 20px rgba(20,30,20,.10)' }}>
-                      {saleBrandResults.map(brand => <button key={brand.id} type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setSaleBrand(brand.nama); setSaleBrandOpen(false) }} style={{ display: 'block', width: '100%', padding: '9px 11px', border: 0, borderBottom: '1px solid #eef2eb', background: '#fff', textAlign: 'left', fontSize: 12, color: '#344238' }}>{brand.nama}</button>)}
-                    </div>}
-                  </div>
-                </label>
                 <label className="sales-field"><span>Quantity</span>
                   <div className="sales-input-wrap" style={{ display: 'grid', gridTemplateColumns: '36px minmax(0,1fr) 36px', alignItems: 'center', overflow: 'hidden' }}>
                     <button type="button" aria-label="Kurangi quantity" onClick={() => setSaleQty(String(Math.max(1, (Number(saleQty) || 1) - 1)))} style={{ height: 39, border: 0, background: '#f1f5ed', color: '#526f52', fontSize: 20, lineHeight: 1 }}>−</button>
@@ -589,7 +580,7 @@ export default function App() {
                   </div>
                 </label>
                 <label className="sales-field sales-field-price"><span>Harga</span>
-                  <div className="sales-input-wrap sales-price-input"><small>Rp</small><input type="text" inputMode="numeric" value={salePrice} onChange={e => setSalePrice(formatRupiahInput(e.target.value))} /></div>
+                  <div className="sales-input-wrap sales-price-input"><small>Rp</small><input type="text" inputMode="numeric" value={salePrice === '0' ? '' : salePrice} placeholder="0" aria-label="Harga dalam rupiah" onChange={e => setSalePrice(formatRupiahInput(e.target.value))} /></div>
                 
                 </label>
                 <label className="sales-field sales-field-date"><span>Tanggal penjualan</span>
