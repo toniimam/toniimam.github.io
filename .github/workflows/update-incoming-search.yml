@@ -9,35 +9,39 @@ permissions:
 
 jobs:
   update:
-    if: ${{ !contains(github.event.head_commit.message, 'feat: pencarian barang masuk') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Update Barang Masuk UI
-        shell: python
+      - name: Apply UI change once
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
+          if [[ "$COMMIT_MESSAGE" == *"feat: pencarian barang masuk"* ]]; then
+            echo "Perubahan sudah diterapkan, tidak ada tindakan."
+            exit 0
+          fi
+          python - <<'PY'
           from pathlib import Path
           import re
 
           path = Path('src/App.tsx')
           text = path.read_text(encoding='utf-8')
 
-          old_state = "  const [incomingProductId, setIncomingProductId] = useState('')\n"
-          new_state = old_state + "  const [incomingSearch, setIncomingSearch] = useState('')\n"
           if "const [incomingSearch, setIncomingSearch]" not in text:
-              if old_state not in text:
+              marker = "  const [incomingProductId, setIncomingProductId] = useState('')\n"
+              if marker not in text:
                   raise SystemExit('State incomingProductId tidak ditemukan')
-              text = text.replace(old_state, new_state, 1)
+              text = text.replace(marker, marker + "  const [incomingSearch, setIncomingSearch] = useState('')\n", 1)
 
-          old_memo = "  const incomingTransactions = useMemo(() => transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').sort((a,b) => (b.tanggal || '').localeCompare(a.tanggal || '') || b.id-a.id), [transactions])\n"
-          new_memo = old_memo + "  const incomingSearchResults = useMemo(() => {\n    const q = incomingSearch.trim().toLowerCase()\n    if (q.length < 2) return []\n    return products.filter(p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)).slice(0, 8)\n  }, [products, incomingSearch])\n"
           if "const incomingSearchResults = useMemo" not in text:
-              if old_memo not in text:
+              marker = "  const incomingTransactions = useMemo(() => transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').sort((a,b) => (b.tanggal || '').localeCompare(a.tanggal || '') || b.id-a.id), [transactions])\n"
+              if marker not in text:
                   raise SystemExit('Memo incomingTransactions tidak ditemukan')
-              text = text.replace(old_memo, new_memo, 1)
+              addition = marker + "  const incomingSearchResults = useMemo(() => {\n    const q = incomingSearch.trim().toLowerCase()\n    if (q.length < 2) return []\n    return products.filter(p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)).slice(0, 8)\n  }, [products, incomingSearch])\n"
+              text = text.replace(marker, addition, 1)
 
           pattern = re.compile(r'''<label style=\{\{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 \}\}>Barang\s*<select value=\{incomingProductId\} onChange=\{e => setIncomingProductId\(e\.target\.value\)\}[^>]*>.*?</select>\s*</label>''', re.S)
           replacement = '''<div style={{ display: 'grid', gap: 7, position: 'relative' }}>
@@ -56,10 +60,13 @@ jobs:
               raise SystemExit(f'Blok pilihan Barang Masuk tidak ditemukan, count={count}')
 
           path.write_text(text, encoding='utf-8')
+          PY
+
       - name: Verify source
         run: |
           grep -q "incomingSearchResults" src/App.tsx
           grep -q "Cari nama barang atau brand" src/App.tsx
+
       - name: Commit change and remove one-time workflow
         run: |
           git config user.name "github-actions[bot]"
