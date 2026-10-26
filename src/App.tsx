@@ -60,6 +60,7 @@ export default function App() {
   const [brands, setBrands] = useState<Brand[]>([])
   const [targetDrafts, setTargetDrafts] = useState<Record<number, string>>({})
   const [dashboardSalesRange, setDashboardSalesRange] = useState<7 | 30>(7)
+  const [dashboardSalesMetric, setDashboardSalesMetric] = useState<'revenue' | 'sold'>('revenue')
   const [expandedBrandTarget, setExpandedBrandTarget] = useState<number | null>(null)
   const [activeNav, setActiveNav] = useState('Dashboard')
   const [query, setQuery] = useState('')
@@ -375,7 +376,7 @@ export default function App() {
     const daySales = sales.filter(sale => sale.tanggal_pembelian === key)
     return { key, label: dashboardSalesRange === 7 ? date.toLocaleDateString('id-ID', { weekday: 'short' }) : String(date.getDate()), sold: daySales.reduce((sum, sale) => sum + Number(sale.qty || 0), 0), revenue: daySales.reduce((sum, sale) => sum + Number(sale.qty || 0) * Number(sale.harga || 0), 0) }
   })
-  const dashboardSalesMax = Math.max(1, ...dashboardSalesDays.map(d => d.sold))
+  const dashboardSalesMax = Math.max(1, ...dashboardSalesDays.map(d => dashboardSalesMetric === 'revenue' ? d.revenue : d.sold))
   const dashboardSalesQty = dashboardSalesDays.reduce((sum, d) => sum + d.sold, 0)
   const dashboardSalesRevenue = dashboardSalesDays.reduce((sum, d) => sum + d.revenue, 0)
   const targetBrands = brandMonthlySales.filter(brand => brand.target > 0)
@@ -415,9 +416,10 @@ export default function App() {
     <article className="metric-card"><div className="metric-top"><span>Omzet</span><div className="metric-icon red"><TrendingUp size={19} /></div></div><div className="metric-value" style={{fontSize: totalTarget >= 1000000000 ? 19 : 22}}>{rupiah(totalAchieved)}</div><div className="metric-foot"><span className={totalTargetProgress >= 100 ? 'foot-neutral' : 'foot-warning'}>{totalTarget > 0 ? `${rupiah(totalTarget)} target, ${Math.round(totalTargetProgress)}% tercapai` : 'Belum ada target brand'}</span></div></article>
   </div>
   <article className="panel activity-panel dashboard-sales-panel">
-    <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Penjualan berdasarkan periode yang dipilih.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
+    <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Grafik harian berdasarkan {dashboardSalesMetric === 'revenue' ? 'omzet' : 'jumlah unit terjual'}.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
     <div className="dashboard-sales-summary"><div><span>Unit terjual</span><b>{dashboardSalesQty.toLocaleString('id-ID')}</b></div><div><span>Omzet</span><b>{rupiah(dashboardSalesRevenue)}</b></div></div>
-    <div className={'dashboard-sales-bars sales-days-' + dashboardSalesRange}>{dashboardSalesDays.map(day => <div className="dashboard-sales-day" key={day.key}><div className="dashboard-sales-bar-wrap"><div title={day.sold.toLocaleString('id-ID') + ' unit'} className="dashboard-sales-bar" style={{height: Math.max(day.sold ? 5 : 2, day.sold / dashboardSalesMax * 100) + '%'}} /></div><span>{day.label}</span></div>)}</div>
+    <div className="dashboard-range-toggle dashboard-metric-toggle"><button className={dashboardSalesMetric === 'revenue' ? 'active' : ''} onClick={() => setDashboardSalesMetric('revenue')}>Grafik omzet</button><button className={dashboardSalesMetric === 'sold' ? 'active' : ''} onClick={() => setDashboardSalesMetric('sold')}>Grafik unit</button></div>
+    <div className={'dashboard-sales-bars sales-days-' + dashboardSalesRange}>{dashboardSalesDays.map(day => { const value = dashboardSalesMetric === 'revenue' ? day.revenue : day.sold; return <div className="dashboard-sales-day" key={day.key}><div className="dashboard-sales-bar-wrap"><div title={dashboardSalesMetric === 'revenue' ? rupiah(day.revenue) : day.sold.toLocaleString('id-ID') + ' unit'} className="dashboard-sales-bar" style={{height: Math.max(value ? 5 : 2, value / dashboardSalesMax * 100) + '%'}} /></div><span>{day.label}</span></div> })}</div>
   </article>
   <article className="panel brand-target-panel">
     <div className="panel-heading"><div><h2>Brand &amp; target penjualan</h2><p>Realisasi omzet bulan ini. Brand tanpa target tidak dihitung pada omzet dashboard.</p></div><span className="demo-pill">{brands.length} BRAND</span></div>
