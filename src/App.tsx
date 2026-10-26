@@ -379,9 +379,9 @@ export default function App() {
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (dashboardSalesRange - 1 - index))
     const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
     const daySales = sales.filter(sale => sale.tanggal_pembelian === key)
-    return { key, label: dashboardSalesRange === 7 ? date.toLocaleDateString('id-ID', { weekday: 'short' }) : String(date.getDate()), sold: daySales.reduce((sum, sale) => sum + Number(sale.qty || 0), 0) }
+    return { key, label: dashboardSalesRange === 7 ? date.toLocaleDateString('id-ID', { weekday: 'short' }) : String(date.getDate()), salesCount: daySales.length }
   })
-  const dashboardSalesMax = Math.max(1, ...dashboardSalesDays.map(d => d.sold))
+  const dashboardSalesMax = Math.max(1, ...dashboardSalesDays.map(d => d.salesCount))
 
   if (!token) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 20, background: '#f5f6fb', fontFamily: 'Inter,system-ui,sans-serif' }}>
@@ -414,11 +414,11 @@ export default function App() {
     <article className="metric-card"><div className="metric-top"><span>Total barang</span><div className="metric-icon purple"><Package size={19} /></div></div><div className="metric-value">{totalStockUnits.toLocaleString('id-ID')}<small> unit</small></div><div className="metric-foot"><span className="foot-neutral">Jumlah unit stok tersedia saat ini</span></div></article>
   </div>
   <article className="panel activity-panel dashboard-sales-panel">
-    <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Jumlah unit terjual per hari.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
-    <div className="dashboard-sales-summary"><div><span>Total unit terjual</span><b>{dashboardSalesDays.reduce((sum, d) => sum + d.sold, 0).toLocaleString('id-ID')} unit</b></div></div>
+    <div className="panel-heading"><div><h2>Statistik penjualan</h2><p>Jumlah transaksi penjualan per hari.</p></div><div className="dashboard-range-toggle"><button className={dashboardSalesRange === 7 ? 'active' : ''} onClick={() => setDashboardSalesRange(7)}>7 hari</button><button className={dashboardSalesRange === 30 ? 'active' : ''} onClick={() => setDashboardSalesRange(30)}>30 hari</button></div></div>
+    <div className="dashboard-sales-summary"><div><span>Total transaksi penjualan</span><b>{dashboardSalesDays.reduce((sum, d) => sum + d.salesCount, 0).toLocaleString('id-ID')} transaksi</b></div></div>
     <div className="dashboard-sales-chart">
       <div className="dashboard-sales-axis">{[1, 0.75, 0.5, 0.25, 0].map((ratio, index) => <span key={index}>{Math.round(dashboardSalesMax * ratio).toLocaleString('id-ID')}</span>)}</div>
-      <div className={'dashboard-sales-bars sales-days-' + dashboardSalesRange}>{dashboardSalesDays.map(day => { const value = day.sold; return <div className="dashboard-sales-day" key={day.key}><div className="dashboard-sales-bar-wrap"><div title={value + ' unit terjual'} className="dashboard-sales-bar" style={{height: Math.max(value ? 5 : 2, value / dashboardSalesMax * 100) + '%'}} /></div><span>{day.label}</span></div> })}</div>
+      <div className={'dashboard-sales-bars sales-days-' + dashboardSalesRange}>{dashboardSalesDays.map(day => { const value = day.salesCount; return <div className="dashboard-sales-day" key={day.key}><div className="dashboard-sales-bar-wrap"><div title={value + ' transaksi penjualan'} className="dashboard-sales-bar" style={{height: Math.max(value ? 5 : 2, value / dashboardSalesMax * 100) + '%'}} /></div><span>{day.label}</span></div> })}</div>
     </div>
   </article>
   <article className="panel brand-target-panel">
