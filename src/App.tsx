@@ -129,7 +129,7 @@ export default function App() {
       setProducts(result)
       setTransactions(txList)
       setSales((rawSales || []).map((sale: any) => ({ ...sale, id: Number(sale.id), qty: Number(sale.qty || 0), harga: Number(sale.harga || 0), barang_id: sale.barang_id == null ? null : Number(sale.barang_id) })))
-      setNotice(`Terhubung ke database StokFlow, ${result.length.toLocaleString('id-ID')} barang dimuat.`)
+      setNotice('Terhubung ke database StokFlow.')
     } catch (e: any) {
       setNotice(`Gagal memuat data: ${e.message}`)
     } finally { setLoading(false) }
