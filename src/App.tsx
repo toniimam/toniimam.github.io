@@ -38,6 +38,8 @@ async function apiAll(path: string, currentToken = '') {
 }
 
 const rupiah = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v)
+const formatRupiahInput = (v: string) => { const digits = v.replace(/\D/g, ''); return digits ? Number(digits).toLocaleString('id-ID') : '0' }
+const parseRupiahInput = (v: string) => Number(v.replace(/\./g, '').replace(/\D/g, '') || 0)
 const rupiahRingkas = (v: number) => v >= 1000000 ? `${(v / 1000000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} jt` : v >= 1000 ? `${Math.round(v / 1000).toLocaleString('id-ID')} rb` : String(v)
 const todayLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const firstDayOfMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` }
@@ -74,6 +76,8 @@ export default function App() {
   const [saleQty, setSaleQty] = useState('1')
   const [salePrice, setSalePrice] = useState('0')
   const [saleDate, setSaleDate] = useState(todayLocal())
+  const [saleBrand, setSaleBrand] = useState('')
+  const [saleBrandOpen, setSaleBrandOpen] = useState(false)
   const [incomingProductId, setIncomingProductId] = useState('')
   const [incomingSearch, setIncomingSearch] = useState('')
   const [incomingQty, setIncomingQty] = useState('1')
@@ -235,19 +239,24 @@ export default function App() {
   async function addSale() {
     const product = products.find(item => item.id === Number(saleProductId))
     const qty = Number(saleQty)
-    const price = Number(salePrice)
+    const price = parseRupiahInput(salePrice)
+    const brand = saleBrand.trim()
     if (!product) { setNotice('Pilih barang yang akan dijual.'); return }
     if (!Number.isFinite(qty) || qty < 1) { setNotice('Jumlah penjualan minimal 1 unit.'); return }
     if (!Number.isFinite(price) || price < 0) { setNotice('Harga jual tidak boleh negatif.'); return }
+    if (!brand) { setNotice('Brand wajib diisi.'); return }
     if (!saleDate) { setNotice('Tanggal penjualan wajib diisi.'); return }
     setSavingTransaction(true)
     try {
       await api('/rest/v1/rpc/catat_penjualan_atomic', {
         method: 'POST',
-        body: JSON.stringify({ p_barang_id: product.id, p_brand: product.brand || 'Tanpa brand', p_qty: qty, p_harga: price, p_tanggal_pembelian: saleDate })
+        body: JSON.stringify({ p_barang_id: product.id, p_brand: brand, p_qty: qty, p_harga: price, p_tanggal_pembelian: saleDate })
       }, token)
       await loadData(token)
       setSaleQty('1')
+      setSalePrice('0')
+      setSaleBrand('')
+      setSaleBrandOpen(false)
       setNotice('Penjualan tersimpan. Catatan penjualan dan pergerakan stok dicatat dalam satu transaksi database.')
     } catch (e: any) {
       setNotice('Penjualan gagal disimpan: ' + e.message)
@@ -412,6 +421,10 @@ export default function App() {
   const pageSize = 7
   const sortedSales = useMemo(() => [...sales].sort((a,b) => b.tanggal_pembelian.localeCompare(a.tanggal_pembelian) || b.id-a.id), [sales])
   const incomingTransactions = useMemo(() => transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').sort((a,b) => (b.tanggal || '').localeCompare(a.tanggal || '') || b.id-a.id), [transactions])
+  const saleBrandResults = useMemo(() => {
+    const q = saleBrand.trim().toLowerCase()
+    return brands.filter(b => !q || b.nama.toLowerCase().includes(q)).slice(0, 8)
+  }, [brands, saleBrand])
   const incomingSearchResults = useMemo(() => {
     const q = incomingSearch.trim().toLowerCase()
     if (q.length < 2) return []
@@ -534,17 +547,29 @@ export default function App() {
             <div className="sales-form-card">
               <div className="sales-form-grid">
                 <label className="sales-field sales-field-product"><span>Barang yang dijual</span>
-                  <select value={saleProductId} onChange={e => { const id = e.target.value; setSaleProductId(id); const item = products.find(p => p.id === Number(id)); if (item) setSalePrice(String(item.price)) }}>
+                  <select value={saleProductId} onChange={e => { const id = e.target.value; setSaleProductId(id); const item = products.find(p => p.id === Number(id)); if (item) { setSalePrice(formatRupiahInput(String(item.price))); setSaleBrand(item.brand === 'Tanpa brand' ? '' : item.brand) } }}>
                     <option value="">Pilih nama barang</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} · {p.brand}</option>)}
                   </select>
                   <small>Pilih barang dari daftar stok.</small>
                 </label>
-                <label className="sales-field"><span>Jumlah terjual</span>
-                  <div className="sales-input-wrap"><input type="number" min="1" step="1" inputMode="numeric" value={saleQty} onChange={e => setSaleQty(e.target.value)} /><small>unit</small></div>
+                <label className="sales-field sales-field-brand"><span>Brand</span>
+                  <div style={{ position: 'relative' }}>
+                    <input value={saleBrand} placeholder="Ketik nama brand" onFocus={() => setSaleBrandOpen(true)} onChange={e => { setSaleBrand(e.target.value); setSaleBrandOpen(true) }} onBlur={() => window.setTimeout(() => setSaleBrandOpen(false), 150)} autoComplete="off" />
+                    {saleBrandOpen && saleBrandResults.length > 0 && <div style={{ position: 'absolute', zIndex: 20, top: 'calc(100% + 4px)', left: 0, right: 0, maxHeight: 180, overflowY: 'auto', border: '1px solid #e1e8dc', borderRadius: 9, background: '#fff', boxShadow: '0 8px 20px rgba(20,30,20,.10)' }}>
+                      {saleBrandResults.map(brand => <button key={brand.id} type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setSaleBrand(brand.nama); setSaleBrandOpen(false) }} style={{ display: 'block', width: '100%', padding: '9px 11px', border: 0, borderBottom: '1px solid #eef2eb', background: '#fff', textAlign: 'left', fontSize: 12, color: '#344238' }}>{brand.nama}</button>)}
+                    </div>}
+                  </div>
                 </label>
-                <label className="sales-field"><span>Harga jual per unit</span>
-                  <div className="sales-input-wrap sales-price-input"><small>Rp</small><input type="number" min="0" step="100" inputMode="numeric" value={salePrice} onChange={e => setSalePrice(e.target.value)} /></div>
-                  <small>Harga dapat disesuaikan untuk transaksi ini.</small>
+                <label className="sales-field"><span>Quantity</span>
+                  <div className="sales-input-wrap" style={{ display: 'grid', gridTemplateColumns: '36px minmax(0,1fr) 36px', alignItems: 'center', overflow: 'hidden' }}>
+                    <button type="button" aria-label="Kurangi quantity" onClick={() => setSaleQty(String(Math.max(1, (Number(saleQty) || 1) - 1)))} style={{ height: 39, border: 0, background: '#f1f5ed', color: '#526f52', fontSize: 20, lineHeight: 1 }}>−</button>
+                    <input type="number" min="1" step="1" inputMode="numeric" value={saleQty} onChange={e => setSaleQty(e.target.value)} style={{ width: '100%', border: 0, textAlign: 'center', padding: '0 4px', height: 39 }} />
+                    <button type="button" aria-label="Tambah quantity" onClick={() => setSaleQty(String((Number(saleQty) || 1) + 1))} style={{ height: 39, border: 0, background: '#f1f5ed', color: '#526f52', fontSize: 20, lineHeight: 1 }}>+</button>
+                  </div>
+                </label>
+                <label className="sales-field"><span>Harga</span>
+                  <div className="sales-input-wrap sales-price-input"><small>Rp</small><input type="text" inputMode="numeric" value={salePrice} onChange={e => setSalePrice(formatRupiahInput(e.target.value))} /></div>
+                  <small>Contoh: 1.000.000</small>
                 </label>
                 <label className="sales-field"><span>Tanggal penjualan</span>
                   <input type="date" value={saleDate} max={todayLocal()} onChange={e => setSaleDate(e.target.value)} />
