@@ -77,8 +77,6 @@ export default function App() {
   const [saleQty, setSaleQty] = useState('1')
   const [salePrice, setSalePrice] = useState('0')
   const [saleDate, setSaleDate] = useState(todayLocal())
-  const [saleBrand, setSaleBrand] = useState('')
-  const [saleBrandOpen, setSaleBrandOpen] = useState(false)
   const [incomingProductId, setIncomingProductId] = useState('')
   const [incomingSearch, setIncomingSearch] = useState('')
   const [incomingQty, setIncomingQty] = useState('1')
@@ -241,8 +239,8 @@ export default function App() {
     const product = products.find(item => item.id === Number(saleProductId))
     const qty = Number(saleQty)
     const price = parseRupiahInput(salePrice)
-    const brand = product.brand === 'Tanpa brand' ? '' : product.brand
     if (!product) { setNotice('Pilih barang yang akan dijual.'); return }
+    const brand = product.brand === 'Tanpa brand' ? '' : product.brand
     if (!Number.isFinite(qty) || qty < 1) { setNotice('Jumlah penjualan minimal 1 unit.'); return }
     if (!Number.isFinite(price) || price < 0) { setNotice('Harga jual tidak boleh negatif.'); return }
     if (!brand) { setNotice('Brand wajib diisi.'); return }
@@ -257,8 +255,6 @@ export default function App() {
       setSaleQty('1')
       setSalePrice('0')
       setSaleProductSearch('')
-      setSaleBrand('')
-      setSaleBrandOpen(false)
       setNotice('Penjualan tersimpan. Catatan penjualan dan pergerakan stok dicatat dalam satu transaksi database.')
     } catch (e: any) {
       setNotice('Penjualan gagal disimpan: ' + e.message)
@@ -423,11 +419,6 @@ export default function App() {
   const pageSize = 7
   const sortedSales = useMemo(() => [...sales].sort((a,b) => b.tanggal_pembelian.localeCompare(a.tanggal_pembelian) || b.id-a.id), [sales])
   const incomingTransactions = useMemo(() => transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').sort((a,b) => (b.tanggal || '').localeCompare(a.tanggal || '') || b.id-a.id), [transactions])
-  const saleBrandResults = useMemo(() => {
-    const q = saleBrand.trim().toLowerCase()
-    return brands.filter(b => !q || b.nama.toLowerCase().includes(q)).slice(0, 8)
-  }, [brands, saleBrand])
-
   const saleProductResults = useMemo(() => {
     const q = saleProductSearch.trim().toLowerCase()
     return products.filter(p => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)).slice(0, 10)
