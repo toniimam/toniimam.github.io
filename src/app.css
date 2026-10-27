@@ -391,3 +391,48 @@ body{background:#f5f7f1}
  .sales-price-stack span{font-size:8px}
  .sales-price-stack b{font-size:9px}
 }
+
+/* Samakan ukuran input dan selector khusus form Jual */
+.sales-page .sales-field>input,
+.sales-page .sales-field>select,
+.sales-page .sales-field .sales-input-wrap{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  height:40px;
+  min-height:40px;
+  border:1px solid #dfe5da;
+  border-radius:9px;
+  background-color:#fff;
+  color:#354056;
+  font:500 12px 'DM Sans',sans-serif;
+}
+.sales-page .sales-field>input,
+.sales-page .sales-field>select{padding:0 10px}
+.sales-page .sales-field>input:focus,
+.sales-page .sales-field>select:focus,
+.sales-page .sales-field .sales-input-wrap:focus-within{
+  outline:none;
+  border-color:#8aa887;
+  box-shadow:0 0 0 3px #6e8d681c;
+}
+.sales-page .sales-field .sales-input-wrap{display:flex;align-items:center;overflow:hidden}
+.sales-page .sales-field .sales-input-wrap input{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  height:100%;
+  min-height:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  font:500 12px 'DM Sans',sans-serif;
+}
+.sales-page .sales-field .sales-input-wrap input:focus{outline:none;box-shadow:none}
+.sales-page .sales-field .sales-input-wrap button{height:100%!important}
+@media(max-width:600px){
+  .sales-page .sales-field>input,
+  .sales-page .sales-field>select,
+  .sales-page .sales-field .sales-input-wrap{height:39px;min-height:39px}
+}
+
