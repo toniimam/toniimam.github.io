@@ -522,3 +522,22 @@ body{background:#f5f7f1}
   .inventory-panel:has(.incoming-date-field)>div[style*="border: 1px solid"]{padding:14px!important;border-radius:10px!important}
   .inventory-panel:has(.incoming-date-field) input{font-size:13px!important}
 }
+
+
+/* Barang Masuk: tanggal lokal tampil di atas input date native, kalender tetap aktif */
+.inventory-panel .incoming-date-control{position:relative;display:block;width:100%;min-width:0}
+.inventory-panel .incoming-date-control input[type="date"]{
+  display:block;width:100%;min-width:0;box-sizing:border-box;height:40px;padding:9px 8px;
+  border:1px solid #e1e5ee!important;border-radius:8px;background:#fff;color:transparent!important;
+  font:inherit;font-size:12px!important;position:relative;z-index:1;cursor:pointer;
+  -webkit-appearance:auto;appearance:auto;
+}
+.inventory-panel .incoming-date-control input[type="date"]::-webkit-datetime-edit{color:transparent!important}
+.inventory-panel .incoming-date-control input[type="date"]::-webkit-calendar-picker-indicator{
+  opacity:1;cursor:pointer;position:relative;z-index:3;margin-left:4px
+}
+.inventory-panel .incoming-date-overlay{
+  position:absolute;left:10px;right:38px;top:1px;height:38px;display:flex;align-items:center;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none;z-index:2;
+  color:#30394d;font-size:12px;font-weight:500;line-height:1
+}
