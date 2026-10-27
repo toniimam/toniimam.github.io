@@ -41,6 +41,19 @@ const rupiah = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency'
 const formatRupiahInput = (v: string) => { const digits = v.replace(/\D/g, ''); return digits ? Number(digits).toLocaleString('id-ID') : '0' }
 const parseRupiahInput = (v: string) => { const digits = String(v).replace(/\D/g, ''); return digits ? Number(digits) : 0 }
 const rupiahRingkas = (v: number) => v >= 1000000 ? `${(v / 1000000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} jt` : v >= 1000 ? `${Math.round(v / 1000).toLocaleString('id-ID')} rb` : String(v)
+const brandLogo = (name: string) => {
+  const normalized = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+  const logos: Record<string, string> = {
+    bellezza: '/image/Bellezza.png',
+    dekkson: '/image/Dekkson.jpeg',
+    pjshandle: '/image/Pjs%20Handle.jpeg',
+    pjs: '/image/Pjs%20Handle.jpeg',
+    roster: '/image/Roster.png',
+    solid: '/image/Solid.jpeg',
+    wallpanel: '/image/Wallpanel.jpeg',
+  }
+  return logos[normalized] || ''
+}
 const todayLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const firstDayOfMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` }
 const navItems = [
@@ -534,7 +547,7 @@ export default function App() {
   <article className="panel brand-target-panel">
     <div className="panel-heading"><div><h2>Brand &amp; target penjualan</h2><p>Realisasi omzet bulan ini. Brand tanpa target tidak dihitung pada omzet dashboard.</p></div></div>
     <div className="brand-target-grid">{brandMonthlySales.map(brand => <details className="brand-target-item brand-target-collapsible" key={brand.id} open={expandedBrandTarget === brand.id} onToggle={e => { if (e.currentTarget.open) setExpandedBrandTarget(brand.id); else if (expandedBrandTarget === brand.id) setExpandedBrandTarget(null) }}>
-      <summary className="brand-target-summary"><div><b>{brand.nama}</b><span>{brand.target > 0 ? `${rupiah(brand.sold)} / ${rupiah(brand.target)}` : `${rupiah(brand.sold)} · tanpa target`}</span></div><div className="brand-target-summary-right"><span>{brand.target > 0 ? Math.round(brand.sold / brand.target * 100) + '%' : '-'}</span></div></summary>
+      <summary className="brand-target-summary"><div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}><div style={{ width: 38, height: 38, flex: '0 0 38px', display: 'grid', placeItems: 'center', overflow: 'hidden', border: '1px solid #e5e9e2', borderRadius: 9, background: '#fff' }}>{brandLogo(brand.nama) ? <img src={brandLogo(brand.nama)} alt={brand.nama} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 3, boxSizing: 'border-box' }} /> : <span style={{ fontSize: 11, fontWeight: 750, color: '#607b5b' }}>{brand.nama.slice(0, 2).toUpperCase()}</span>}</div><div style={{ display: 'grid', gap: 4, minWidth: 0 }}><b>{brand.nama}</b><span>{brand.target > 0 ? `${rupiah(brand.sold)} / ${rupiah(brand.target)}` : `${rupiah(brand.sold)} · tanpa target`}</span></div></div><div className="brand-target-summary-right"><span>{brand.target > 0 ? Math.round(brand.sold / brand.target * 100) + '%' : '-'}</span></div></summary>
       <div className="brand-target-track"><div style={{ width: brand.progress + '%' }} /></div>
       <div className="brand-target-bottom"><span>{brand.target > 0 ? 'Target bulanan' : 'Target belum diisi'}</span><div className="brand-target-edit"><input aria-label={'Target penjualan bulanan dalam Rupiah untuk ' + brand.nama} type="number" min="0" step="1000" value={targetDrafts[brand.id] ?? String(brand.target_bulanan || 0)} onChange={e => setTargetDrafts(current => ({ ...current, [brand.id]: e.target.value }))} /><button onClick={() => saveBrandTarget(brand)}>Simpan</button></div></div>
     </details>)}</div>
