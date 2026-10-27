@@ -35,6 +35,36 @@
       .incoming-page .incoming-date-overlay{position:absolute!important;left:11px!important;right:50px!important;top:0!important;height:40px!important;margin:0!important;display:flex!important;align-items:center!important;pointer-events:none!important;z-index:2!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;color:#354056!important;font:500 12px/1 'DM Sans',sans-serif!important}
       .incoming-page .incoming-field-date>.sales-date-display{display:none!important}
 
+      /* Form koreksi stok, ringkas dan proporsional */
+      .correction-form-card{padding:14px!important}
+      .correction-form-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(90px,.75fr) minmax(135px,1fr);gap:10px;align-items:start}
+      .correction-form-grid .sales-field{min-width:0!important;margin:0!important}
+      .correction-form-grid .sales-field>span{display:block;margin-bottom:6px;font-size:11px;font-weight:600}
+      .correction-form-grid .sales-field>input,.correction-search-wrap>input{width:100%;height:39px;min-width:0;box-sizing:border-box;padding:0 10px;border:1px solid #dfe5da;border-radius:9px;background:#fff;font:500 12px 'DM Sans',sans-serif;color:#354056}
+      .correction-search-wrap{position:relative;min-width:0}
+      .correction-search-wrap>input{padding-right:32px}
+      .correction-search-wrap>button{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:#7b8495;font-size:20px;line-height:1}
+      .correction-search-results{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;max-height:220px;overflow:auto;background:#fff;border:1px solid #dfe5da;border-radius:9px;box-shadow:0 8px 24px #1c2b1c16}
+      .correction-search-results>button{display:flex;width:100%;flex-direction:column;gap:3px;text-align:left;padding:9px 10px;border:0;border-bottom:1px solid #edf0e9;background:#fff;color:#354056;font-size:12px}
+      .correction-search-results>button span,.correction-search-empty{font-size:10px;color:#7b8495}
+      .correction-search-empty{padding:10px}
+      .correction-form-bottom{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+      .correction-form-bottom .sales-stock-info{min-width:0;flex:1}
+      .correction-form-bottom .sales-stock-info span{font-size:10px}
+      .correction-form-bottom .sales-stock-info strong{font-size:13px}
+      .correction-form-bottom .sales-submit{margin-left:auto;white-space:nowrap}
+      .correction-hint{display:block;margin-top:8px;font-size:10px;color:#7b8495}
+      @media(max-width:600px){
+        .correction-form-card{padding:11px!important}
+        .correction-form-grid{grid-template-columns:minmax(0,1fr) 94px;gap:9px}
+        .correction-product-field{grid-column:1 / -1}
+        .correction-date-field{min-width:0}
+        .correction-form-bottom{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px}
+        .correction-form-bottom .sales-stock-info{padding:8px 9px;background:#f7f9f4;border-radius:8px}
+        .correction-form-bottom .sales-submit{grid-column:1 / -1;width:100%;margin:0;min-height:39px}
+        .correction-hint{line-height:1.4}
+      }
+
       /* Tabel riwayat koreksi, ringkas dan konsisten dengan riwayat barang masuk */
       .correction-history-table{width:100%!important;overflow:hidden!important}
       .correction-history-table table{width:100%!important;min-width:0!important;table-layout:fixed!important}
