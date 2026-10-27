@@ -505,3 +505,28 @@ body{background:#f5f7f1}
 .login-submit:hover{background:#526f52}
 .login-submit:disabled{opacity:.65;cursor:wait}
 @media(max-width:480px){.login-screen{padding:16px}.login-card{padding:24px 21px;border-radius:13px}}
+
+
+/* Barang Masuk form follows the compact Halaman Jual visual system */
+.incoming-form-card .sales-field-product{grid-column:span 1}
+.incoming-form-grid{grid-template-columns:minmax(0,1.6fr) minmax(110px,.7fr) minmax(145px,.9fr)}
+.incoming-form-grid .sales-field input[type="date"]{padding:0 8px}
+.incoming-qty-wrap{grid-template-columns:36px minmax(0,1fr) 36px!important}
+.incoming-qty-wrap button{cursor:pointer}
+.incoming-form-bottom{gap:18px}
+.incoming-date-stock{flex:1;min-width:150px;padding:10px 12px;border:1px solid #edf0f5;border-radius:9px;background:#f8faf6}
+.incoming-date-stock strong{font-size:17px;color:#526f52}
+.incoming-submit{white-space:nowrap}
+@media(max-width:1000px){
+ .incoming-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .incoming-form-grid .sales-field-product{grid-column:span 2}
+}
+@media(max-width:600px){
+ .incoming-form-card .sales-field-product{grid-column:auto}
+ .incoming-form-grid{grid-template-columns:minmax(0,1fr);gap:13px}
+ .incoming-form-bottom{gap:12px}
+ .incoming-form-bottom .sales-stock-info{width:calc(50% - 6px);min-width:0}
+ .incoming-form-bottom .incoming-date-stock{width:100%;min-width:0;flex:auto}
+ .incoming-form-bottom .incoming-date-stock strong{font-size:20px}
+ .incoming-submit{width:100%;min-height:44px}
+}
