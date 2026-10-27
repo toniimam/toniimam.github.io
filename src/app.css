@@ -507,26 +507,26 @@ body{background:#f5f7f1}
 @media(max-width:480px){.login-screen{padding:16px}.login-card{padding:24px 21px;border-radius:13px}}
 
 
-/* Barang Masuk form follows the compact Halaman Jual visual system */
-.incoming-form-card .sales-field-product{grid-column:span 1}
-.incoming-form-grid{grid-template-columns:minmax(0,1.6fr) minmax(110px,.7fr) minmax(145px,.9fr)}
-.incoming-form-grid .sales-field input[type="date"]{padding:0 8px}
-.incoming-qty-wrap{grid-template-columns:36px minmax(0,1fr) 36px!important}
-.incoming-qty-wrap button{cursor:pointer}
-.incoming-form-bottom{gap:18px}
-.incoming-date-stock{flex:1;min-width:150px;padding:10px 12px;border:1px solid #edf0f5;border-radius:9px;background:#f8faf6}
-.incoming-date-stock strong{font-size:17px;color:#526f52}
-.incoming-submit{white-space:nowrap}
-@media(max-width:1000px){
- .incoming-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
- .incoming-form-grid .sales-field-product{grid-column:span 2}
+/* Samakan bahasa visual Barang Masuk dengan Halaman Jual, tanpa mengubah susunan form */
+.incoming-date-display{font-size:9px!important;line-height:1.4;font-weight:400!important;color:#929bad!important}
+.inventory-panel:has(.incoming-date-field) .inventory-heading h2{color:#30394d}
+.inventory-panel:has(.incoming-date-field) .inventory-heading p{color:#858ea1}
+.inventory-panel:has(.incoming-date-field) .demo-pill{border-color:#e8eaf2;background:#fafbfe;color:#697388;border-radius:7px}
+.inventory-panel:has(.incoming-date-field)>div[style*="border: 1px solid"]{
+  border-color:#e9ecf3!important;border-radius:12px!important;background:#fff!important;padding:18px!important
+}
+.inventory-panel:has(.incoming-date-field) input{
+  border-color:#e1e5ee!important;border-radius:8px!important;color:#30394d!important;font-size:12px!important
+}
+.inventory-panel:has(.incoming-date-field) input:focus{
+  outline:none;border-color:#6e8d68!important;box-shadow:0 0 0 3px #6e8d6812
+}
+.inventory-panel:has(.incoming-date-field) input::placeholder{color:#a0a7b5}
+.inventory-panel:has(.incoming-date-field) label{color:#485267!important}
+.inventory-panel:has(.incoming-date-field) button.button-primary{
+  border-radius:8px!important;min-height:42px;font-size:11px;font-weight:700
 }
 @media(max-width:600px){
- .incoming-form-card .sales-field-product{grid-column:auto}
- .incoming-form-grid{grid-template-columns:minmax(0,1fr);gap:13px}
- .incoming-form-bottom{gap:12px}
- .incoming-form-bottom .sales-stock-info{width:calc(50% - 6px);min-width:0}
- .incoming-form-bottom .incoming-date-stock{width:100%;min-width:0;flex:auto}
- .incoming-form-bottom .incoming-date-stock strong{font-size:20px}
- .incoming-submit{width:100%;min-height:44px}
+  .inventory-panel:has(.incoming-date-field)>div[style*="border: 1px solid"]{padding:14px!important;border-radius:10px!important}
+  .inventory-panel:has(.incoming-date-field) input{font-size:13px!important}
 }
