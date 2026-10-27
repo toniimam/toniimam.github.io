@@ -12,6 +12,38 @@
       .sales-page .sales-field-date>input[type="date"]::-webkit-datetime-edit{color:transparent}
       .sales-page .sales-field-date>input[type="date"]::-webkit-calendar-picker-indicator{opacity:1}
       .sales-page .sales-field-date>.sales-date-display{position:absolute;left:11px;right:38px;bottom:0;height:41px;margin:0;display:flex;align-items:center;pointer-events:none;z-index:2;font-size:11px;line-height:1;font-weight:600;color:#65745f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+      /* Navbar dikunci saat halaman discroll */
+      .topbar{position:sticky!important;top:0!important;z-index:90!important}
+      .desktop-nav{position:sticky!important;top:69px!important;z-index:89!important}
+      @media(max-width:850px){
+        .topbar{position:sticky!important;top:0!important;z-index:90!important}
+      }
+
+      /* Perbaikan selector tanggal Barang Masuk, native input tetap aktif */
+      .incoming-page .incoming-field-date{position:relative!important;min-width:0!important}
+      .incoming-page .incoming-date-control{position:relative!important;display:block!important;width:100%!important;height:40px!important;min-height:40px!important}
+      .incoming-page .incoming-date-control input[type="date"]{
+        position:absolute!important;inset:0!important;width:100%!important;height:40px!important;min-height:40px!important;margin:0!important;padding:0 10px!important;box-sizing:border-box!important;
+        color:transparent!important;font-size:12px!important;line-height:normal!important;z-index:1!important;
+      }
+      .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit,
+      .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+      .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit-text,
+      .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit-month-field,
+      .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit-day-field,
+      .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit-year-field{color:transparent!important}
+      .incoming-page .incoming-date-control input[type="date"]::-webkit-calendar-picker-indicator{opacity:1!important;position:absolute!important;right:7px!important;top:50%!important;transform:translateY(-50%)!important;z-index:4!important;margin:0!important;padding:5px!important}
+      .incoming-page .incoming-date-overlay{
+        position:absolute!important;left:11px!important;right:50px!important;top:0!important;height:40px!important;margin:0!important;display:flex!important;align-items:center!important;pointer-events:none!important;z-index:2!important;
+        overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;color:#354056!important;font:500 12px/1 'DM Sans',sans-serif!important
+      }
+      .incoming-page .incoming-field-date>.sales-date-display{display:none!important}
+      @media(max-width:600px){
+        .incoming-page .incoming-date-control{height:39px!important;min-height:39px!important}
+        .incoming-page .incoming-date-control input[type="date"]{height:39px!important;min-height:39px!important}
+        .incoming-page .incoming-date-overlay{height:39px!important;font-size:12px!important;right:50px!important}
+      }
     </style>
     <script>
       (function () {
