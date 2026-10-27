@@ -584,6 +584,7 @@ export default function App() {
                 </label>
                 <label className="sales-field sales-field-date"><span>Tanggal penjualan</span>
                   <input type="date" value={saleDate} max={todayLocal()} onChange={e => setSaleDate(e.target.value)} />
+                  <small className="sales-date-display">{saleDate ? new Date(saleDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: '2-digit', year: '2-digit' }) : ''}</small>
                 </label>
               </div>
               <div className="sales-form-bottom">
