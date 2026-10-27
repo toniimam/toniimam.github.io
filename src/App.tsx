@@ -541,7 +541,7 @@ export default function App() {
   </article>
 </section>}
           {activeNav === 'Penjualan' && <section className="panel inventory-panel sales-page">
-            <div className="inventory-heading sales-page-heading"><div><h2>Catat penjualan</h2><p>Isi barang, jumlah, harga, dan tanggal. Stok diperbarui otomatis saat disimpan.</p></div><span className="sales-count">{sales.length.toLocaleString('id-ID')} transaksi</span></div>
+            <div className="inventory-heading sales-page-heading"><span className="sales-count">{sales.length.toLocaleString('id-ID')} transaksi</span></div>
             <div className="sales-form-card">
               <div className="sales-form-grid">
                 <label className="sales-field sales-field-product"><span>Barang</span>
