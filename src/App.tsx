@@ -489,13 +489,13 @@ export default function App() {
   const dashboardSalesMax = Math.max(1, ...dashboardSalesDays.map(d => d.revenue))
 
   if (!token) return (
-    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 20, background: '#f5f6fb', fontFamily: 'Inter,system-ui,sans-serif' }}>
-      <form onSubmit={login} style={{ width: '100%', maxWidth: 420, background: '#fff', padding: 32, borderRadius: 20, boxShadow: '0 18px 60px rgba(20,30,60,.10)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}><div style={{ width: 44, height: 44, borderRadius: 12, display: 'grid', placeItems: 'center', background: '#5c62e8', color: '#fff' }}><Boxes size={23} /></div><div><b style={{ fontSize: 22 }}>stokflow</b><div style={{ fontSize: 10, letterSpacing: 1.4, color: '#8990a3' }}>INVENTORY SYSTEM</div></div></div>
-        <h1 style={{ margin: '0 0 8px', fontSize: 27 }}>Masuk ke StokFlow</h1><p style={{ color: '#72798b', marginTop: 0 }}>Gunakan akun Supabase yang sudah dibuat sebagai admin.</p>
-        <label style={{ display: 'block', marginTop: 20, fontSize: 13, fontWeight: 700 }}>Email</label><input value={loginEmail} onChange={e => setLoginEmail(e.target.value)} type="email" required placeholder="Email admin" style={{ width: '100%', boxSizing: 'border-box', padding: 13, marginTop: 7, border: '1px solid #dfe2eb', borderRadius: 10 }} />
-        <label style={{ display: 'block', marginTop: 16, fontSize: 13, fontWeight: 700 }}>Password</label><input value={password} onChange={e => setPassword(e.target.value)} type="password" required placeholder="Password" style={{ width: '100%', boxSizing: 'border-box', padding: 13, marginTop: 7, border: '1px solid #dfe2eb', borderRadius: 10 }} />
-        <button type="submit" disabled={loginLoading} style={{ width: '100%', marginTop: 22, padding: 13, border: 0, borderRadius: 10, background: '#5c62e8', color: '#fff', fontWeight: 800 }}>{loginLoading ? 'Memproses...' : 'Masuk'}</button>
+    <div className="login-screen">
+      <form className="login-card" onSubmit={login}>
+        <div className="login-brand"><div className="login-mark"><Boxes size={23} /></div><div><b style={{ fontSize: 22 }}>stokflow</b><div style={{ fontSize: 10, letterSpacing: 1.4, color: '#8990a3' }}>INVENTORY SYSTEM</div></div></div>
+        <h1>Masuk ke StokFlow</h1><p className="login-description">Gunakan akun Supabase yang sudah dibuat sebagai admin.</p>
+        <label className="login-label">Email<input className="login-input" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} type="email" required placeholder="Email admin" /></label>
+        <label className="login-label">Password<input className="login-input" value={password} onChange={e => setPassword(e.target.value)} type="password" required placeholder="Password" /></label>
+        <button className="login-submit" type="submit" disabled={loginLoading}>{loginLoading ? 'Memproses...' : 'Masuk'}</button>
         {notice && <div style={{ marginTop: 16, padding: 12, borderRadius: 10, background: '#fff5f5', color: '#b42318', fontSize: 13 }}>{notice}</div>}
       </form>
     </div>
