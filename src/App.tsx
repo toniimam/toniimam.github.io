@@ -628,13 +628,12 @@ export default function App() {
           </section>}
 
           {activeNav === 'Barang Masuk' && <section className="panel inventory-panel" style={{ padding: 20 }}>
-            <div className="inventory-heading"><div><h2>Catat barang masuk</h2><p>Pergerakan stok divalidasi database sebelum disimpan.</p></div><span className="demo-pill">{transactions.filter(t => t.type === 'masuk' || t.type === 'adjust_masuk').length.toLocaleString('id-ID')} DATA</span></div>
             <div style={{ display: 'grid', gap: 12, margin: '14px 0 22px', padding: 14, border: '1px solid #e1eadf', borderRadius: 14, background: '#fbfdf9' }}>
               <div style={{ display: 'grid', gap: 6, position: 'relative' }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#455b49' }}>PILIH BARANG</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#455b49' }}>Pilih barang</label>
                 <div style={{ position: 'relative' }}>
                   <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#819184', pointerEvents: 'none' }} />
-                  <input value={incomingSearch} onChange={e => { setIncomingSearch(e.target.value); if (!e.target.value.trim()) setIncomingProductId('') }} placeholder="Cari nama barang atau brand..." style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px 11px 36px', border: '1px solid #d5e0d2', borderRadius: 10, background: '#fff', fontSize: 14 }} />
+                  <input value={incomingSearch} onChange={e => { setIncomingSearch(e.target.value); if (!e.target.value.trim()) setIncomingProductId('') }} placeholder="Cari nama barang atau brand..." style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px 11px 36px', border: '1px solid #d5e0d2', borderRadius: 10, background: '#fff', fontSize: 12 }} />
                 </div>
                 {incomingSearch.trim().length >= 2 && !incomingProductId && <div style={{ border: '1px solid #d5e0d2', borderRadius: 10, background: '#fff', overflow: 'hidden', boxShadow: '0 8px 20px rgba(35,60,40,.08)' }}>
                   {incomingSearchResults.length > 0 ? incomingSearchResults.map(p => <button key={p.id} type="button" onClick={() => { setIncomingProductId(String(p.id)); setIncomingSearch(p.name) }} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, textAlign: 'left', padding: '10px 12px', border: 0, borderBottom: '1px solid #edf2eb', background: '#fff', cursor: 'pointer' }}><span style={{ minWidth: 0 }}><b style={{ display: 'block', fontSize: 13, color: '#263b2c' }}>{p.name}</b><span style={{ display: 'block', marginTop: 2, color: '#758477', fontSize: 12 }}>{p.brand}</span></span><span style={{ flexShrink: 0, fontSize: 12, color: p.stock < 0 ? '#c43d4b' : '#617664' }}>Stok {p.stock.toLocaleString('id-ID')}</span></button>) : <div style={{ padding: 12, color: '#758477', fontSize: 13 }}>Barang tidak ditemukan.</div>}
@@ -642,13 +641,13 @@ export default function App() {
                 {incomingProductId && (() => { const selected = products.find(p => p.id === Number(incomingProductId)); return selected ? <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '10px 12px', border: '1px solid #d5e4d0', borderRadius: 10, background: '#f0f6ed' }}><div style={{ minWidth: 0 }}><b style={{ display: 'block', fontSize: 13, color: '#294632' }}>{selected.name}</b><span style={{ display: 'block', marginTop: 3, color: '#627966', fontSize: 12 }}>{selected.brand} · stok saat ini {selected.stock.toLocaleString('id-ID')} unit</span></div><button type="button" onClick={() => { setIncomingProductId(''); setIncomingSearch('') }} style={{ border: 0, background: 'transparent', color: '#627966', cursor: 'pointer', padding: 5 }} title="Ganti barang"><X size={16} /></button></div> : null })()}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 10 }}>
-                <label style={{ display: 'grid', alignContent: 'start', gap: 6, fontSize: 12, fontWeight: 700, color: '#455b49' }}>JUMLAH MASUK
-                  <input type="number" min="1" step="1" value={incomingQty} onChange={e => setIncomingQty(e.target.value)} style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', padding: '11px 10px', border: '1px solid #d5e0d2', borderRadius: 10, background: '#fff', fontSize: 14 }} />
+                <label style={{ display: 'grid', alignContent: 'start', gap: 6, fontSize: 12, fontWeight: 700, color: '#455b49' }}>Jumlah masuk
+                  <input type="number" min="1" step="1" value={incomingQty} onChange={e => setIncomingQty(e.target.value)} style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', padding: '11px 10px', border: '1px solid #d5e0d2', borderRadius: 10, background: '#fff', fontSize: 12 }} />
                   <small style={{ fontSize: 11, fontWeight: 400, color: '#758477' }}>Dalam unit</small>
                 </label>
-                <label className="incoming-date-field" style={{ display: 'grid', alignContent: 'start', gap: 6, fontSize: 12, fontWeight: 700, color: '#455b49' }}>TANGGAL MASUK
+                <label className="incoming-date-field" style={{ display: 'grid', alignContent: 'start', gap: 6, fontSize: 12, fontWeight: 700, color: '#455b49' }}>Tanggal masuk
                   <input type="date" value={incomingDate} max={todayLocal()} onChange={e => setIncomingDate(e.target.value)} style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', padding: '11px 8px', border: '1px solid #d5e0d2', borderRadius: 10, background: '#fff', fontSize: 13 }} />
-                  <small className="incoming-date-display" style={{ fontSize: 11, fontWeight: 400, color: '#758477' }}>{incomingDate ? new Date(incomingDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : ''}</small>
+                  
                 </label>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: '#f0f6ed' }}>
