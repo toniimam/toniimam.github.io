@@ -653,7 +653,6 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: '#f0f6ed' }}>
                 <div><span style={{ display: 'block', fontSize: 11, color: '#627966' }}>STOK PADA TANGGAL TERPILIH</span><b style={{ display: 'block', marginTop: 3, fontSize: 17, color: '#294632' }}>{incomingProductId && stockAtDate(Number(incomingProductId), incomingDate) !== null ? Number(stockAtDate(Number(incomingProductId), incomingDate)).toLocaleString('id-ID') + ' unit' : 'Pilih barang'}</b></div>
-                <icon />
               </div>
               <button className="button-primary" style={{ width: '100%', minHeight: 44, borderRadius: 10 }} disabled={savingTransaction || loading} onClick={addIncoming}>{savingTransaction ? 'Menyimpan...' : '＋ Simpan barang masuk'}</button>
             </div>
