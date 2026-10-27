@@ -13,11 +13,12 @@
       .sales-page .sales-field-date>input[type="date"]::-webkit-calendar-picker-indicator{opacity:1}
       .sales-page .sales-field-date>.sales-date-display{position:absolute;left:11px;right:38px;bottom:0;height:41px;margin:0;display:flex;align-items:center;pointer-events:none;z-index:2;font-size:11px;line-height:1;font-weight:600;color:#65745f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-      /* Navbar dikunci saat halaman discroll */
-      .topbar{position:sticky!important;top:0!important;z-index:90!important}
-      .desktop-nav{position:sticky!important;top:69px!important;z-index:89!important}
+      /* Navbar tetap di posisi atas, tidak ikut terdorong saat halaman discroll */
+      .topbar{position:fixed!important;top:0!important;left:246px!important;right:0!important;height:69px!important;z-index:100!important}
+      .desktop-nav{position:sticky!important;top:69px!important;z-index:99!important}
       @media(max-width:850px){
-        .topbar{position:sticky!important;top:0!important;z-index:90!important}
+        .topbar{position:fixed!important;top:0!important;left:0!important;right:0!important;height:69px!important;z-index:100!important}
+        .main-area{padding-top:69px!important}
       }
 
       /* Perbaikan selector tanggal Barang Masuk, native input tetap aktif */
