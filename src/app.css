@@ -477,3 +477,5 @@ body{background:#f5f7f1}
  .sales-page .sales-field-price,.sales-page .sales-field-date{grid-column:span 5}
  .sales-page .sales-field .sales-input-wrap button{background:transparent!important}
 }
+
+@media(max-width:600px){.sales-page .sales-field-date:nth-child(4){grid-column:span 5}}
