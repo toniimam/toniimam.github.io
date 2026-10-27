@@ -486,3 +486,22 @@ body{background:#f5f7f1}
 .inventory-panel .incoming-date-field>input[type="date"]::-webkit-datetime-edit{color:transparent}
 .inventory-panel .incoming-date-field>.incoming-date-display{position:absolute;left:10px;right:38px;bottom:0;height:42px;margin:0;display:flex;align-items:center;pointer-events:none;z-index:2;font-size:11px;line-height:1;font-weight:600;color:#65745f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:600px){.inventory-panel .incoming-date-field>.incoming-date-display{height:44px}}
+
+
+/* Login, mengikuti tema matcha StokFlow */
+.login-screen{min-height:100vh;display:grid;place-items:center;padding:20px;background:#f6f8f3;font-family:'DM Sans',sans-serif;color:#172033}
+.login-card{width:100%;max-width:420px;padding:30px;background:#fff;border:1px solid #e5ebdf;border-radius:16px;box-shadow:0 8px 28px rgba(48,70,43,.07)}
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:25px}
+.login-mark{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#8aa887,#526f52);color:#fff}
+.login-brand b{font-family:Manrope,sans-serif;font-size:22px;letter-spacing:-.7px}
+.login-brand div div{font-size:10px;letter-spacing:1.4px;color:#899487}
+.login-card h1{font-family:Manrope,sans-serif;font-size:25px;letter-spacing:-.7px;margin:0 0 8px;font-weight:800}
+.login-description{color:#858f80;font-size:12px;line-height:1.6;margin:0}
+.login-label{display:block;margin-top:19px;font-size:12px;font-weight:700;color:#465342}
+.login-input{display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:7px;border:1px solid #dfe7da;border-radius:9px;background:#fff;color:#303b2d;font:inherit;font-size:13px;outline:none}
+.login-input:focus{border-color:#6e8d68;box-shadow:0 0 0 3px #edf3e9}
+.login-input::placeholder{color:#a1aa9d}
+.login-submit{width:100%;margin-top:22px;padding:13px;border:1px solid #6e8d68;border-radius:9px;background:#6e8d68;color:#fff;font-weight:800}
+.login-submit:hover{background:#526f52}
+.login-submit:disabled{opacity:.65;cursor:wait}
+@media(max-width:480px){.login-screen{padding:16px}.login-card{padding:24px 21px;border-radius:13px}}
