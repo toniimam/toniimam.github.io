@@ -50,6 +50,7 @@ const rupiahRingkas = (v: number) => v >= 1000000 ? `${(v / 1000000).toLocaleStr
 const brandLogo = (name: string) => {
   const normalized = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
   const logos: Record<string, string> = {
+    belleza: logoBellezza,
     bellezza: logoBellezza,
     dekkson: logoDekkson,
     pjshandle: logoPjsHandle,
