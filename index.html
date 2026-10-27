@@ -26,10 +26,7 @@
       /* Perbaikan selector tanggal Barang Masuk, native input tetap aktif */
       .incoming-page .incoming-field-date{position:relative!important;min-width:0!important}
       .incoming-page .incoming-date-control{position:relative!important;display:block!important;width:100%!important;height:40px!important;min-height:40px!important}
-      .incoming-page .incoming-date-control input[type="date"]{
-        position:absolute!important;inset:0!important;width:100%!important;height:40px!important;min-height:40px!important;margin:0!important;padding:0 10px!important;box-sizing:border-box!important;
-        color:transparent!important;font-size:12px!important;line-height:normal!important;z-index:1!important;
-      }
+      .incoming-page .incoming-date-control input[type="date"]{position:absolute!important;inset:0!important;width:100%!important;height:40px!important;min-height:40px!important;margin:0!important;padding:0 10px!important;box-sizing:border-box!important;color:transparent!important;font-size:12px!important;line-height:normal!important;z-index:1!important}
       .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit,
       .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit-fields-wrapper,
       .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit-text,
@@ -37,15 +34,36 @@
       .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit-day-field,
       .incoming-page .incoming-date-control input[type="date"]::-webkit-datetime-edit-year-field{color:transparent!important}
       .incoming-page .incoming-date-control input[type="date"]::-webkit-calendar-picker-indicator{opacity:1!important;position:absolute!important;right:7px!important;top:50%!important;transform:translateY(-50%)!important;z-index:4!important;margin:0!important;padding:5px!important}
-      .incoming-page .incoming-date-overlay{
-        position:absolute!important;left:11px!important;right:50px!important;top:0!important;height:40px!important;margin:0!important;display:flex!important;align-items:center!important;pointer-events:none!important;z-index:2!important;
-        overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;color:#354056!important;font:500 12px/1 'DM Sans',sans-serif!important
-      }
+      .incoming-page .incoming-date-overlay{position:absolute!important;left:11px!important;right:50px!important;top:0!important;height:40px!important;margin:0!important;display:flex!important;align-items:center!important;pointer-events:none!important;z-index:2!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;color:#354056!important;font:500 12px/1 'DM Sans',sans-serif!important}
       .incoming-page .incoming-field-date>.sales-date-display{display:none!important}
+
+      /* Riwayat Barang Masuk dibuat konsisten dengan tabel stok */
+      .incoming-history-table{width:100%!important;overflow-x:auto!important}
+      .incoming-history-table table{width:100%!important;min-width:620px!important;table-layout:fixed!important}
+      .incoming-history-table th,
+      .incoming-history-table td{box-sizing:border-box!important;vertical-align:middle!important}
+      .incoming-history-table th:nth-child(1),
+      .incoming-history-table td:nth-child(1){width:118px!important}
+      .incoming-history-table th:nth-child(2),
+      .incoming-history-table td:nth-child(2){width:auto!important}
+      .incoming-history-table th:nth-child(3),
+      .incoming-history-table td:nth-child(3){width:145px!important;text-align:right!important}
+      .incoming-history-table th:nth-child(4),
+      .incoming-history-table td:nth-child(4){width:145px!important;text-align:right!important}
+      .incoming-history-table td:nth-child(2){white-space:normal!important;overflow-wrap:anywhere!important}
+      .incoming-history-table tbody tr:hover{background:#f8faf6!important}
+      .incoming-history-table th{height:38px!important;padding-top:10px!important;padding-bottom:10px!important}
+      .incoming-history-table td{height:48px!important;padding-top:10px!important;padding-bottom:10px!important}
+      .incoming-history-table td:nth-child(3),
+      .incoming-history-table td:nth-child(4){font-weight:600!important;color:#515b70!important}
       @media(max-width:600px){
         .incoming-page .incoming-date-control{height:39px!important;min-height:39px!important}
         .incoming-page .incoming-date-control input[type="date"]{height:39px!important;min-height:39px!important}
         .incoming-page .incoming-date-overlay{height:39px!important;font-size:12px!important;right:50px!important}
+        .incoming-history-table table{min-width:580px!important}
+        .incoming-history-table th:nth-child(1),.incoming-history-table td:nth-child(1){width:100px!important}
+        .incoming-history-table th:nth-child(3),.incoming-history-table td:nth-child(3),
+        .incoming-history-table th:nth-child(4),.incoming-history-table td:nth-child(4){width:130px!important}
       }
     </style>
     <script>
