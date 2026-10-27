@@ -646,8 +646,10 @@ export default function App() {
                   <small style={{ fontSize: 11, fontWeight: 400, color: '#758477' }}>Dalam unit</small>
                 </label>
                 <label className="incoming-date-field" style={{ display: 'grid', alignContent: 'start', gap: 6, fontSize: 12, fontWeight: 700, color: '#455b49' }}>Tanggal masuk
-                  <input type="date" value={incomingDate} max={todayLocal()} onChange={e => setIncomingDate(e.target.value)} style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', padding: '11px 8px', border: '1px solid #d5e0d2', borderRadius: 10, background: '#fff', fontSize: 13 }} />
-                  
+                  <span className="incoming-date-control">
+                    <input type="date" aria-label="Tanggal masuk" value={incomingDate} max={todayLocal()} onChange={e => setIncomingDate(e.target.value)} />
+                    <span className="incoming-date-overlay">{incomingDate ? new Date(incomingDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: '2-digit', year: '2-digit' }) : 'Pilih tanggal'}</span>
+                  </span>
                 </label>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: '#f0f6ed' }}>
