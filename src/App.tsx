@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, ArrowUpRight, Bell, Boxes, LayoutDashboard, LogOut, Package, Pencil, Search, ShoppingCart, SlidersHorizontal, Trash2, TrendingUp, Truck, X } from 'lucide-react'
+import logoBellezza from '../image/Bellezza.png'
+import logoDekkson from '../image/Dekkson.jpeg'
+import logoPjsHandle from '../image/Pjs Handle.jpeg'
+import logoRoster from '../image/Roster.png'
+import logoSolid from '../image/Solid.jpeg'
+import logoWallpanel from '../image/Wallpanel.jpeg'
 
 type Brand = { id: number; nama: string; target_bulanan: number }
 type Product = { id: number; name: string; sku: string; brand: string; category: string; stock: number; openingStock: number; startDate: string; price: number; status: 'Aman' | 'Menipis' | 'Habis' }
@@ -44,13 +50,13 @@ const rupiahRingkas = (v: number) => v >= 1000000 ? `${(v / 1000000).toLocaleStr
 const brandLogo = (name: string) => {
   const normalized = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
   const logos: Record<string, string> = {
-    bellezza: '/image/Bellezza.png',
-    dekkson: '/image/Dekkson.jpeg',
-    pjshandle: '/image/Pjs%20Handle.jpeg',
-    pjs: '/image/Pjs%20Handle.jpeg',
-    roster: '/image/Roster.png',
-    solid: '/image/Solid.jpeg',
-    wallpanel: '/image/Wallpanel.jpeg',
+    bellezza: logoBellezza,
+    dekkson: logoDekkson,
+    pjshandle: logoPjsHandle,
+    pjs: logoPjsHandle,
+    roster: logoRoster,
+    solid: logoSolid,
+    wallpanel: logoWallpanel,
   }
   return logos[normalized] || ''
 }
