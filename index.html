@@ -13,11 +13,13 @@
       .sales-page .sales-field-date>input[type="date"]::-webkit-calendar-picker-indicator{opacity:1}
       .sales-page .sales-field-date>.sales-date-display{position:absolute;left:11px;right:38px;bottom:0;height:41px;margin:0;display:flex;align-items:center;pointer-events:none;z-index:2;font-size:11px;line-height:1;font-weight:600;color:#65745f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-      /* Navbar tetap di posisi atas, tidak ikut terdorong saat halaman discroll */
+      /* Navbar benar-benar fixed terhadap viewport, tidak ikut bergeser saat scroll */
       .topbar{position:fixed!important;top:0!important;left:246px!important;right:0!important;height:69px!important;z-index:100!important}
-      .desktop-nav{position:sticky!important;top:69px!important;z-index:99!important}
+      .desktop-nav{position:fixed!important;top:69px!important;left:246px!important;right:0!important;z-index:99!important;width:auto!important}
+      .main-area{padding-top:116px!important}
       @media(max-width:850px){
         .topbar{position:fixed!important;top:0!important;left:0!important;right:0!important;height:69px!important;z-index:100!important}
+        .desktop-nav{display:none!important}
         .main-area{padding-top:69px!important}
       }
 
