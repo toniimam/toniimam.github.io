@@ -454,3 +454,26 @@ body{background:#f5f7f1}
   .sales-page .sales-field-product{grid-column:auto}
   .sales-page .sales-field-price,.sales-page .sales-field-date{grid-column:span 1}
 }
+
+
+/* Koreksi layout form Penjualan, hanya halaman ini */
+.sales-page .sales-form-grid{grid-template-columns:repeat(10,minmax(0,1fr));gap:10px}
+.sales-page .sales-field-product{grid-column:span 7}
+.sales-page .sales-field-product+ .sales-field{grid-column:span 3}
+.sales-page .sales-field-price,.sales-page .sales-field-date{grid-column:span 5}
+.sales-page .sales-date-display{display:block;margin-top:4px;font-size:10px;line-height:1.3;font-weight:600;color:#65745f}
+.sales-page .sales-field .sales-input-wrap button{background:transparent!important}
+.sales-page .sales-field .sales-input-wrap{background:#fff}
+@media(max-width:1000px){
+ .sales-page .sales-form-grid{grid-template-columns:repeat(10,minmax(0,1fr))}
+ .sales-page .sales-field-product{grid-column:span 7}
+ .sales-page .sales-field-product+ .sales-field{grid-column:span 3}
+ .sales-page .sales-field-price,.sales-page .sales-field-date{grid-column:span 5}
+}
+@media(max-width:600px){
+ .sales-page .sales-form-grid{grid-template-columns:repeat(10,minmax(0,1fr));gap:9px}
+ .sales-page .sales-field-product{grid-column:span 7}
+ .sales-page .sales-field-product+ .sales-field{grid-column:span 3}
+ .sales-page .sales-field-price,.sales-page .sales-field-date{grid-column:span 5}
+ .sales-page .sales-field .sales-input-wrap button{background:transparent!important}
+}
