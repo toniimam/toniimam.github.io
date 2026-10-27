@@ -624,8 +624,9 @@ export default function App() {
               <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Jumlah masuk (unit)
                 <input type="number" min="1" step="1" value={incomingQty} onChange={e => setIncomingQty(e.target.value)} />
               </label>
-              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Tanggal barang masuk
+              <label className="incoming-date-field" style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 650 }}>Tanggal barang masuk
                 <input type="date" value={incomingDate} max={todayLocal()} onChange={e => setIncomingDate(e.target.value)} />
+                <small className="incoming-date-display">{incomingDate ? new Date(incomingDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: '2-digit', year: '2-digit' }) : ''}</small>
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'end', gap: 7 }}><span style={{ color: '#747b8d', fontSize: 12 }}>Stok barang pada tanggal tersebut</span><b style={{ fontSize: 18 }}>{incomingProductId && stockAtDate(Number(incomingProductId), incomingDate) !== null ? Number(stockAtDate(Number(incomingProductId), incomingDate)).toLocaleString('id-ID') + ' unit' : 'Pilih barang'}</b><button className="button-primary" disabled={savingTransaction || loading} onClick={addIncoming}>{savingTransaction ? 'Menyimpan...' : 'Simpan barang masuk'}</button></div>
             </div>
