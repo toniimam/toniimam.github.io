@@ -6,6 +6,13 @@
     <meta name="theme-color" content="#0f172a" />
     <meta name="description" content="StokFlow, dashboard pengelolaan stok barang." />
     <title>StokFlow | Manajemen Stok</title>
+    <style>
+      .sales-page .sales-field-date{position:relative}
+      .sales-page .sales-field-date>input[type="date"]{color:transparent;position:relative;z-index:1}
+      .sales-page .sales-field-date>input[type="date"]::-webkit-datetime-edit{color:transparent}
+      .sales-page .sales-field-date>input[type="date"]::-webkit-calendar-picker-indicator{opacity:1}
+      .sales-page .sales-field-date>.sales-date-display{position:absolute;left:11px;right:38px;bottom:0;height:41px;margin:0;display:flex;align-items:center;pointer-events:none;z-index:2;font-size:11px;line-height:1;font-weight:600;color:#65745f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    </style>
     <script>
       (function () {
         function showLoadError(message) {
