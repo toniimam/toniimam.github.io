@@ -48,8 +48,9 @@
       .correction-search-results>button{display:flex;width:100%;flex-direction:column;gap:3px;text-align:left;padding:9px 10px;border:0;border-bottom:1px solid #edf0e9;background:#fff;color:#354056;font-size:12px}
       .correction-search-results>button span,.correction-search-empty{font-size:10px;color:#7b8495}
       .correction-search-empty{padding:10px}
-      .correction-form-bottom{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
-      .correction-form-bottom .sales-stock-info{min-width:0;flex:1}
+      .correction-form-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:10px;margin-top:12px}
+      .correction-form-bottom .sales-stock-info{min-width:0;flex:initial}
+      .correction-form-bottom .sales-submit{grid-column:1 / -1;width:100%;margin:0}
       .correction-form-bottom .sales-stock-info span{font-size:10px}
       .correction-form-bottom .sales-stock-info strong{font-size:13px}
       .correction-form-bottom .sales-submit{margin-left:auto;white-space:nowrap}
